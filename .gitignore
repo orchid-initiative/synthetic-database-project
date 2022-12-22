@@ -1,0 +1,19 @@
+# "Allow list" structure
+
+# 1. ignore everything
+*
+
+# 2. but descend into directories
+!*/
+
+# 3. allow python, sas programs
+!*.py
+!*.sas
+
+# 4. also don't ignore the README or .gitignore
+!README.md
+!.gitignore
+
+# 5. go back and ignore any adhoc or TODO programs
+adhoc*
+TODO*
