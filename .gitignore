@@ -10,9 +10,10 @@
 !*.py
 !*.sas
 
-# 4. also don't ignore the README or .gitignore
+# 4. also don't ignore the README, .gitignore, or requirements.txt
 !README.md
 !.gitignore
+!requirements.txt
 
 # 5. go back and ignore any adhoc or TODO programs
 adhoc*
