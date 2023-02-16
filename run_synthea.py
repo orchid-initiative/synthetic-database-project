@@ -5,7 +5,8 @@ import datetime as dt
 
 start = time.time()
 log.setSysOut(f'{__file__}_{dt.date.today()}.log')
-output_loc = '/home/lsnortheim/projects/rileeki/synthea/output/csv'
+output_loc = 'output'
+"""
 
 
 log.printSectionHeader('Running Synthea')
@@ -29,7 +30,7 @@ synthea.specify_popSize(1220)
 synthea.specify_gender('M')
 synthea.run_synthea()
 log.printElapsedTime(sub_start, "Males created in: ")
-
+"""
 # Format data to our desired layout
 log.printSectionHeader('Formatting Data')
 start2 = time.time()

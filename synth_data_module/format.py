@@ -11,13 +11,13 @@ class Format_Output():
         self.facility_id = facility_id
         self.final_fields = ['Type of Care','Facility Identification Number','Date of Birth','Sex','Ethnicity','Race',
                         'Not in Use','Admission Date','Point of Origin','Route of Admission','Type of Admission',
-                        'Discharge Date','Prinicipal Diagnosis','Present on Admission for Principal Diagnosis',
+                        'Discharge Date','Principal Diagnosis','Present on Admission for Principal Diagnosis',
                         'Other Diagnosis and Present on Admission','Principal Procedure Code',
                         'Principal Procedure Date','Other Procedure Codes and Other Procedure Dates',
-                        'External Casues of Morbidity and Present on Admission','Patients SSN',
+                        'External Casues of Morbidity and Present on Admission','Patient SSN',
                         'Disposition of Patient','Total Charges','Abstract Record Number (Optional)',
                         'Prehospital Care & Resuscitation - DNR Order','Payer Category','Type of Covereage',
-                        'Plan Code Number','Preferred Spoken Language','Patient Addess - Address Number and Street Name',
+                        'Plan Code Number','Preferred Spoken Language','Patient Address - Address Number and Street Name',
                         'Patient Address - City','Patient Address - State','Patient Address - Zip Code',
                         'Patient Address - Country Code','Patient Address - Homeless Indicator']
         self.add_demographics()
@@ -48,6 +48,8 @@ class Format_Output():
     def add_encounters(self):
         encounters = pd.read_csv(f'{self.output_loc}/encounters.csv', dtype = str, parse_dates = [1,2], header=None)
         encounters['encounter_id'] = encounters.iloc[:,0]
+        encounters['EncounterClass'] = encounters.iloc[:,7]
+        encounters = encounters.loc[encounters['EncounterClass']=='inpatient',:].copy()
         encounters['Admission Date'] = encounters.iloc[:,1].apply(lambda x: x.strftime('%Y%m%d'))
         encounters['Discharge Date'] = encounters.iloc[:,2].apply(lambda x: x.strftime('%Y%m%d'))
         encounters['Principal Diagnosis'] = encounters.iloc[:,13] # Needs mapping for ICD-10
@@ -70,6 +72,7 @@ class Format_Output():
         self.output_df.loc[self.output_df['Type of Admission']=='1','Route of Admission'] = np.random.choice(['1','2'])
         self.output_df['Disposition of Patient'] = np.random.choice(mappings.disposition(), size = len(self.output_df))
         self.output_df['Prehospital Care & Resuscitation - DNR Order'] = np.random.choice(['Y','N'], size = len(self.output_df))
+        self.output_df['Abstract Record Number (Optional)'] = np.arange(1, len(self.output_df) + 1)
         print('Hard-coded fields added.  Shape: ', self.output_df.shape)
 
     def fill_missing(self):
