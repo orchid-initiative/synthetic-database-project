@@ -14,6 +14,7 @@
 !README.md
 !.gitignore
 !requirements.txt
+!documentation/*.md
 
 # 5. go back and ignore any adhoc or TODO programs
 adhoc*
