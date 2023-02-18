@@ -16,6 +16,10 @@
 !requirements.txt
 !documentation/*.md
 
-# 5. go back and ignore any adhoc or TODO programs
+# 5. also, allow specific datasets we want to publish
+!data/sample_data.csv
+!data/summary_workbook.xlsx
+
+# 6. go back and ignore any adhoc or TODO programs
 adhoc*
 TODO*
