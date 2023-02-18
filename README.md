@@ -18,10 +18,11 @@ v1 in progress, Dec 2022 - Feb 2023, Riley Kwong, Ann Epstein, Lisa Snortheim, S
 
 ## Additional Resources
 - Synthea<sup>TM</sup>: https://synthetichealth.github.io/synthea/
+- Discussions: https://github.com/rileeki-org/synthetic-database-project/discussions
 - Wiki: https://github.com/rileeki-org/synthetic-database-project/wiki
 - Google Drive (permissions required): Looking for internal project management documents?  Those are stored in [this Google Drive folder](https://drive.google.com/drive/folders/1W4jLmDP6Cl9c2Ocqv08kpu6Y8ToMK7Hy).
 - Slack channel (permissions required): [synthetic_discharges](https://rileeki.slack.com/archives/C04DCD1PYJE)
 - AWS (permissions required): https://rileeki.signin.aws.amazon.com/console
-- Note: .jar file is required in folder, but too large to add to git: https://github.com/synthetichealth/synthea/wiki/Basic-Setup-and-Running
+- Note: .jar file is required in folder, but too large to add to our free GitHub account: https://github.com/synthetichealth/synthea/wiki/Basic-Setup-and-Running
 
 
