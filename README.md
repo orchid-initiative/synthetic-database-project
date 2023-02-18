@@ -2,7 +2,7 @@
 
 
 ## Summary
-Our project leverages [Synthea<sup>TM</sup>](https://synthetichealth.github.io/synthea/), an open-source tool developed by the MITRE Corporation, to create synthetic hospital discharge data. Synthea uses research-based models to generate rich medical histories for synthetic patients.  We extract the hospital visits and create datasets that mimic the administrative data available to healthcare organizations. This synthetic data allows students and researchers to explore patient records without privacy concerns and develop analyses for hospitals to run on their own real data. Our goal is to make it easier for hospitals, public health officials, and researchers to collaborate and gain insights from administrative hospital data, while keeping patient information private.
+Our project leverages [Synthea<sup>TM</sup>](https://synthetichealth.github.io/synthea/), an open-source tool developed by the MITRE Corporation, to create synthetic hospital discharge data. Synthea<sup>TM</sup> uses research-based models to generate rich medical histories for synthetic patients.  We extract the hospital visits and create datasets that mimic the administrative data available to healthcare organizations. This synthetic data allows students and researchers to explore patient records without privacy concerns and develop analyses for hospitals to run on their own real data. Our goal is to make it easier for hospitals, public health officials, and researchers to collaborate and gain insights from administrative hospital data, while keeping patient information private.
 
 
 
