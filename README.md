@@ -30,6 +30,7 @@ The Summary Statistic Workbook provides an overview of the synthetic hospital di
 - Looking for internal project management documents? Those are stored in [this Google Drive folder](https://drive.google.com/drive/folders/1W4jLmDP6Cl9c2Ocqv08kpu6Y8ToMK7Hy).
 
 ### Additional Resources
+- Project management: https://github.com/orgs/rileeki-org/projects/1
 - Synthea<sup>TM</sup>: https://synthetichealth.github.io/synthea/
 - Wiki: https://github.com/rileeki-org/synthetic-database-project/wiki
 - Slack channel (permissions required): [synthetic_discharges](https://rileeki.slack.com/archives/C04DCD1PYJE)
