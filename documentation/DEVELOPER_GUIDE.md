@@ -3,7 +3,7 @@
 Using a local IDE of your choice, add the GIT repos we will need and set up the virtual environment to access helper functions 
  
 - (Create a GITHUB account if you have not already - github.com)
-- Git clone https://github.com/rileeki-org/synthetic-database-project to your IDE
+- Git clone ssh://git@github.com/rileeki-org/synthetic-database-project to your IDE
 - Download and execute synthea [LINK](https://github.com/synthetichealth/synthea/wiki/Basic-Setup-and-Running)
 - Create a virtual environment to access shared helper functions
   - Background reading: (https://www.freecodecamp.org/news/how-to-setup-virtual-environments-in-python/, https://openclassrooms.com/en/courses/6900846-set-up-a-python-environment/6990546-manage-virtual-environments-using-requirements-files)
