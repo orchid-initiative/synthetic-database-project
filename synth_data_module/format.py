@@ -1,6 +1,5 @@
-import subprocess
 import time
-import datetime
+import datetime as dt
 import pandas as pd
 import numpy as np
 import synth_data_module.mappings as mappings
@@ -24,10 +23,12 @@ class Format_Output():
         self.add_encounters()
         self.hard_coding()
         self.fill_missing()
-        self.output_df[self.final_fields].to_csv(f'{output_loc}/../formatted_data.csv', index=False)
+        timestamp = time.time()
+        date_time = dt.datetime.fromtimestamp(timestamp)
+        self.output_df[self.final_fields].to_csv(f'{output_loc}/formatted_data_{date_time.strftime("%d-%m-%Y_%H%M%S")}.csv', index=False)
 
     def add_demographics(self, ):
-        patients = pd.read_csv(f'{self.output_loc}/patients.csv', dtype = str, header=None)
+        patients = pd.read_csv(f'{self.output_loc}/csv/patients.csv', dtype = str, header=None)
         patients['patient_id'] = patients.iloc[:,0]
         patients['Date of Birth'] = patients.iloc[:,1].apply(lambda x: x.replace('-',''))
         patients['Sex'] = patients.iloc[:,14]
@@ -46,7 +47,7 @@ class Format_Output():
         del patients
 
     def add_encounters(self):
-        encounters = pd.read_csv(f'{self.output_loc}/encounters.csv', dtype = str, parse_dates = [1,2], header=0)
+        encounters = pd.read_csv(f'{self.output_loc}/csv/encounters.csv', dtype = str, parse_dates = [1,2], header=0)
         encounters['encounter_id'] = encounters.iloc[:,0]
         encounters['EncounterClass'] = encounters.iloc[:,7]
         encounters = encounters.loc[encounters['EncounterClass']=='inpatient',:].copy()
@@ -54,8 +55,8 @@ class Format_Output():
             encounters['Admission Date'] = encounters.iloc[:,1].apply(lambda x: x.strftime('%Y%m%d'))
             encounters['Discharge Date'] = encounters.iloc[:,2].apply(lambda x: x.strftime('%Y%m%d'))
         except TypeError:
-            encounters['Admission Date'] = encounters.iloc[:,1].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
-            encounters['Discharge Date'] = encounters.iloc[:,2].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
+            encounters['Admission Date'] = encounters.iloc[:,1].apply(lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
+            encounters['Discharge Date'] = encounters.iloc[:,2].apply(lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
         encounters['Principal Diagnosis'] = encounters.iloc[:,13] # Needs mapping for ICD-10
         encounters['Total Charges'] = encounters.iloc[:,11].apply(lambda x: min(int(x.split('.')[0]), 9999999))
         self.output_df = self.output_df.merge(encounters[['encounter_id','Admission Date',
