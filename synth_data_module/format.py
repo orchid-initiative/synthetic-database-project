@@ -1,6 +1,6 @@
 import subprocess
 import time
-import datetime as dt
+import datetime
 import pandas as pd
 import numpy as np
 import synth_data_module.mappings as mappings
@@ -50,8 +50,8 @@ class Format_Output():
         encounters['encounter_id'] = encounters.iloc[:,0]
         encounters['EncounterClass'] = encounters.iloc[:,7]
         encounters = encounters.loc[encounters['EncounterClass']=='inpatient',:].copy()
-        encounters['Admission Date'] = encounters.iloc[:,1].apply(lambda x: x.strftime('%Y%m%d'))
-        encounters['Discharge Date'] = encounters.iloc[:,2].apply(lambda x: x.strftime('%Y%m%d'))
+        encounters['Admission Date'] = encounters.iloc[:,1].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
+        encounters['Discharge Date'] = encounters.iloc[:,2].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
         encounters['Principal Diagnosis'] = encounters.iloc[:,13] # Needs mapping for ICD-10
         encounters['Total Charges'] = encounters.iloc[:,11].apply(lambda x: min(int(x.split('.')[0]), 9999999))
         self.output_df = self.output_df.merge(encounters[['encounter_id','Admission Date',

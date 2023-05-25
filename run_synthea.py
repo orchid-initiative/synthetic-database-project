@@ -5,12 +5,13 @@ import datetime as dt
 
 start = time.time()
 log.setSysOut(f'{__file__}_{dt.date.today()}.log')
-output_loc = 'output'
-"""
+output_loc = 'output/csv'
 
 
 log.printSectionHeader('Running Synthea')
-jar_file = '/home/lsnortheim/projects/rileeki/synthea/synthea-with-dependencies.jar'
+# Todo - how can we make this a relative path more generic for users?  I got "Unable to access jarfile" error without
+#   the full path specified.
+jar_file = '/home/travis/IdeaProjects/synthetic-database-project/synthea-with-dependencies.jar'
 
 
 # Collect Females
@@ -30,11 +31,12 @@ synthea.specify_popSize(1220)
 synthea.specify_gender('M')
 synthea.run_synthea()
 log.printElapsedTime(sub_start, "Males created in: ")
-"""
+
 # Format data to our desired layout
 log.printSectionHeader('Formatting Data')
-start2 = time.time()
+form_start = time.time()
 Format_Output('010735',output_loc)
+log.printElapsedTime(form_start, "Formatted output created in: ")
 
 
 log.printSectionSubHeader('Total Elapsed Time')
