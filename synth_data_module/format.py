@@ -31,8 +31,8 @@ class Format_Output():
         patients['patient_id'] = patients.iloc[:,0]
         patients['Date of Birth'] = patients.iloc[:,1].apply(lambda x: x.replace('-',''))
         patients['Sex'] = patients.iloc[:,14]
-        patients['Ethnicity'] = mappings.ethnicity(patients.iloc[:,12])
-        patients['Race'] = mappings.race(patients.iloc[:,13])
+        patients['Ethnicity'] = mappings.ethnicity(patients.iloc[:,13])
+        patients['Race'] = mappings.race(patients.iloc[:,12])
         patients['Patient SSN'] = patients.iloc[:,3].fillna('000000001').apply(lambda x: x.replace('-',''))
         patients['Patient Address - Address Number and Street Name'] = patients.iloc[:,16]
         patients['Patient Address - City'] = patients.iloc[:,17]
@@ -46,12 +46,16 @@ class Format_Output():
         del patients
 
     def add_encounters(self):
-        encounters = pd.read_csv(f'{self.output_loc}/encounters.csv', dtype = str, parse_dates = [1,2], header=None)
+        encounters = pd.read_csv(f'{self.output_loc}/encounters.csv', dtype = str, parse_dates = [1,2], header=0)
         encounters['encounter_id'] = encounters.iloc[:,0]
         encounters['EncounterClass'] = encounters.iloc[:,7]
         encounters = encounters.loc[encounters['EncounterClass']=='inpatient',:].copy()
-        encounters['Admission Date'] = encounters.iloc[:,1].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
-        encounters['Discharge Date'] = encounters.iloc[:,2].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
+        try:
+            encounters['Admission Date'] = encounters.iloc[:,1].apply(lambda x: x.strftime('%Y%m%d'))
+            encounters['Discharge Date'] = encounters.iloc[:,2].apply(lambda x: x.strftime('%Y%m%d'))
+        except TypeError:
+            encounters['Admission Date'] = encounters.iloc[:,1].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
+            encounters['Discharge Date'] = encounters.iloc[:,2].apply(lambda x: datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
         encounters['Principal Diagnosis'] = encounters.iloc[:,13] # Needs mapping for ICD-10
         encounters['Total Charges'] = encounters.iloc[:,11].apply(lambda x: min(int(x.split('.')[0]), 9999999))
         self.output_df = self.output_df.merge(encounters[['encounter_id','Admission Date',

@@ -1,4 +1,4 @@
-def race(col):
+def ethnicity(col):
     dic = {'hispanic':'E1',
             'nonhispanic': 'E2'}
     col = col.apply(lambda x: dic.get(x, '99'))
@@ -10,12 +10,12 @@ def gender(col):
     col = col.apply(lambda x: dic.get(x, 'U'))
     return col 
 
-def ethnicity(col):
+def race(col):
     dic = {'native': 'R1',
             'asian': 'R2',
             'black': 'R3',
             'hawaiian': 'R4',
-            'asian': 'R2',
+            'white': 'R5',
             'other': 'R9'}
     col = col.apply(lambda x: dic.get(x, '99'))
     return col
