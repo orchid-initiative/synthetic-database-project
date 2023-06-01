@@ -1,4 +1,4 @@
-from synth_data_module import Synthea, Format_Output
+from synth_data_module import Synthea, FormatOutput
 from log_helpers import log_helpers as log
 import time
 import os
@@ -52,7 +52,7 @@ log.printElapsedTime(sub_start, "Males created in: ")
 # Format data to our desired layout
 log.printSectionHeader('Formatting Data')
 form_start = time.time()
-Format_Output('010735',output_loc)
+FormatOutput('010735',output_loc)
 log.printElapsedTime(form_start, "Formatted output created in: ")
 
 
