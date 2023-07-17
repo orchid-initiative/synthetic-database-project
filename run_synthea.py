@@ -8,13 +8,17 @@ import datetime as dt
 start = time.time()
 log.setSysOut(f'{__file__}_{dt.date.today()}.log')
 output_loc = 'output/'
+output_cpcds = 'output/cpcds/*'
 output_csvs = 'output/csv/*'
 output_fhirs = 'output/fhir/*'
-output_metadata = 'output/fhir/*'
+output_metadata = 'output/metadata/*'
 
 # Subsequent Synthea runs append data to the CSVs (this is a setting) so we clear out the past output at the start of each
 # full run_synthea run.  "formatted_data_DATETIME".csv is the only output that persists between runs
 log.printSectionHeader('Clearing Old Local Data')
+files0 = glob.glob(output_cpcds)
+for f in files0:
+    os.remove(f)
 files1 = glob.glob(output_csvs)
 for f in files1:
     os.remove(f)
@@ -37,13 +41,14 @@ sub_start = time.time()
 synthea = Synthea(jar_file,'synthea_settings') # initialize the module
 synthea.specify_popSize(1252)
 synthea.specify_gender('F')
+# synthea.specify_city('California', 'Pasadena')
 synthea.run_synthea()
 log.printElapsedTime(sub_start, "Females created in: ")
 
 # Collect Males
 log.printSectionSubHeader('Creating Male Records')
 sub_start = time.time()
-synthea = Synthea(jar_file,'synthea_settings') # initialize the module
+synthea = Synthea(jar_file, 'synthea_settings') # initialize the module
 synthea.specify_popSize(1220)
 synthea.specify_gender('M')
 synthea.run_synthea()

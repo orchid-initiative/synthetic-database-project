@@ -14,7 +14,11 @@ class Synthea():
 
     def specify_age(self, min, max):
         self.java_command = self.java_command + f' -a {min}-{max}'
-        
+
+    # used if you want to focus on one area - one can also specify hospital list in overrides/hospitals file in the Jar
+    def specify_city(self, state, city):
+        self.java_command = self.java_command + f' {state} {city}'
+
     def run_synthea(self):
         java_command_list = self.java_command.split(' ')
         child = subprocess.Popen(java_command_list, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)

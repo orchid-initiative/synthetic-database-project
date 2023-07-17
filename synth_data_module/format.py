@@ -24,6 +24,7 @@ class FormatOutput:
                              'Patient Address - Country Code', 'Patient Address - Homeless Indicator']
         self.add_demographics()
         self.add_encounters()
+        self.add_procedures()
         self.hard_coding()
         self.fill_missing()
         timestamp = time.time()
@@ -64,19 +65,36 @@ class FormatOutput:
                 lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
             encounters['Discharge Date'] = encounters.iloc[:, 2].apply(
                 lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
-        encounters['Principal Diagnosis'] = encounters.iloc[:, 13]  # Needs mapping for ICD-10
+        #encounters['Principal Diagnosis'] = encounters.iloc[:, 13]  # Needs mapping for ICD-10
+        encounters['Principal Diagnosis'] = mappings.snomedicdbasicmap(encounters.iloc[:, 13])
         encounters['Total Charges'] = encounters.iloc[:, 11].apply(lambda x: min(int(x.split('.')[0]), 9999999))
+        print('SUBCHECK - Encounters Shape: ', encounters.shape)
         # Prepare and merge payers info (replace IDs with real payer data) into encounters
         payers = pd.read_csv(f'{self.output_loc}/csv/payers.csv', dtype=str, parse_dates=[1, 2], header=0)
         payers['payer_id'] = payers.iloc[:, 0]
-        payers['Payer Category'] = payers.apply(mappings.payer_category, axis=1)
+        payers['Payer Category'] = payers.apply(mappings.payer_category, axis=1).astype(str)
         encounters = encounters.merge(payers[['payer_id','Payer Category']], how='left', left_on='payer_id',
                                       right_on='payer_id')
+        # Prepare and merge PoA codes - NOT IN USE CURRENTLY
+        # cpcds = pd.read_csv(f'{self.output_loc}/cpcds/CPCDS_Claims.csv', dtype=str, parse_dates=[1, 2], header=0)
+        # cpcds['claim_id'] = payers.iloc[:, 8]
+        # cpcds['claim_poa'] = payers.iloc[:, 90]
+        # cpcds['claim_principal'] = payers.iloc[:, 92]
+        print('SUBCHECK - Payers and codes merged.  Encounters Shape: ', encounters.shape)
         self.output_df = self.output_df.merge(encounters[['encounter_id', 'Admission Date', 'Discharge Date',
                                                           'Principal Diagnosis', 'Total Charges', 'Payer Category']],
                                               how='left', left_on='patient_id', right_on=encounters.iloc[:, 3])
         print('Encounter info added.  Shape: ', self.output_df.shape)
         del encounters
+
+    def add_procedures(self):
+        procedures = pd.read_csv(f'{self.output_loc}/csv/procedures.csv', dtype=str, parse_dates=[1, 2], header=0)
+        procedures['Principal Procedure Code'] = mappings.snomedicdbasicmap(procedures.iloc[:, 7])
+        print('SUBCHECK - Procedures Shape: ', procedures.shape)
+        self.output_df = self.output_df.merge(procedures[['Principal Procedure Code']],
+                                              how='left', left_on='encounter_id', right_on=procedures.iloc[:, 3])
+        print('Procedure info added.  Shape: ', self.output_df.shape)
+        del procedures
 
     def hard_coding(self):
         self.output_df['Type of Care'] = 1

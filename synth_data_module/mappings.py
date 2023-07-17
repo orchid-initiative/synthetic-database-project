@@ -1,3 +1,11 @@
+import csv
+
+
+with open('synth_data_module/snomedbasicmappings.csv') as f:
+    next(f)  # Skip the header
+    reader = csv.reader(f, skipinitialspace=True)
+    snomeddict = dict(reader)
+
 def ethnicity(col):
     dic = {'hispanic': 'E1',
            'nonhispanic': 'E2'}
@@ -53,3 +61,9 @@ def disposition():
     opts = ['01', '02', '03', '04', '05', '06', '07', '20', '21', '43', '50', '51', '61', '62', '63', '64', '65', '66',
             '69', '70', '81', '82', '83', '84', '85', '86', '87', '88', '89', '90', '91', '92', '93', '94', '95', '00']
     return opts
+
+
+def snomedicdbasicmap(col):
+    dic = snomeddict
+    col = col.apply(lambda x: dic.get(x, ''))
+    return col
