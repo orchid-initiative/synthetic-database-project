@@ -65,3 +65,12 @@ A lightweight Linux VM from somewhere like VMware player can be a quick and easy
     - I did the update manager with whatever it suggested.  Select the banner that suggest you “change mirror to a local one” to make this much much faster.  In the popup just click on the two sources and give it a sec to test speeds and select the top speed option for each.
     - Install GIT from the software manager, we will need it later
     - Restart now or after you install your preferred IDE
+    - 
+
+### IDE Example setup - IntelliJ
+- Within your VM install JetBrains Toolbox from the jetbrains website https://www.jetbrains.com/toolbox-app/
+- Install IntelliJ IDEA Community Edition from the toolbox
+    - Note as of Summer '23 - version 2022.1.4 is the latest that supports the python plugins for some reason so install this version.
+ 
+
+    
