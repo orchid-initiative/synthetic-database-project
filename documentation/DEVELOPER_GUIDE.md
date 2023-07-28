@@ -13,6 +13,7 @@ Using a local IDE of your choice, add the GIT repos we will need and set up the 
   - Run: $ sudo apt install python3-pip     (Installs the Python3 version of "pip" on your system, allowing you to easily install and manage Python packages)
   - Run: $ pip install -r [YOUR REPO PATH]/synthetic-database-project/requirements.txt
 - Prepare to run synthea
+  - if you haven't already, install synthea-with-dependencies.jar: [Download Link](https://github.com/synthetichealth/synthea/releases/download/master-branch-latest/synthea-with-dependencies.jar)
   - move synthea-with-dependencies.jar into your project directory (where run_synthea.py lives)
   - in run_synthea.py set jar_file = [YOUR FULL PROJECT DIRECTORY PATH]  --At least until we find out how to use a relative path for this
   - Run: $ python run_synthea.py
