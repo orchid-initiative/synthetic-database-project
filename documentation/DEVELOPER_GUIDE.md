@@ -16,7 +16,7 @@ Using a local IDE of your choice, add the GIT repos we will need and set up the 
   - if you haven't already, install synthea-with-dependencies.jar: [Download Link](https://github.com/synthetichealth/synthea/releases/download/master-branch-latest/synthea-with-dependencies.jar)
   - move synthea-with-dependencies.jar into your project directory (where run_synthea.py lives)
   - in run_synthea.py set jar_file = [YOUR FULL PROJECT DIRECTORY PATH]  --At least until we find out how to use a relative path for this
-  - Run: $ python run_synthea.py
+  - Run: $ python run_synthea.py --If the command 'python' is not found, use 'python3'
 
 ## Working with synthea
 ### Outputs
