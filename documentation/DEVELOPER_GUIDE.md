@@ -10,11 +10,13 @@ Using a local IDE of your choice, add the GIT repos we will need and set up the 
   - Generate SSH keys on your machine and then add your key to your github account
     - [Generating a SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
     - [Adding your SSH key to github](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
+  - Run: $ sudo apt install python3-pip     (Installs the Python3 version of "pip" on your system, allowing you to easily install and manage Python packages)
   - Run: $ pip install -r [YOUR REPO PATH]/synthetic-database-project/requirements.txt
 - Prepare to run synthea
+  - if you haven't already, install synthea-with-dependencies.jar: [Download Link](https://github.com/synthetichealth/synthea/releases/download/master-branch-latest/synthea-with-dependencies.jar)
   - move synthea-with-dependencies.jar into your project directory (where run_synthea.py lives)
   - in run_synthea.py set jar_file = [YOUR FULL PROJECT DIRECTORY PATH]  --At least until we find out how to use a relative path for this
-  - Run: $ python run_synthea.py
+  - Run: $ python run_synthea.py --If the command 'python' is not found, use 'python3'
 
 ## Working with synthea
 ### Outputs
