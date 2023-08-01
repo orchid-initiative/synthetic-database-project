@@ -25,7 +25,6 @@ class FormatOutput:
         self.add_demographics()
         self.add_encounters()
         self.add_procedures()
-        self.add_procedure_date()
         self.hard_coding()
         self.fill_missing()
         timestamp = time.time()
@@ -91,22 +90,16 @@ class FormatOutput:
     def add_procedures(self):
         procedures = pd.read_csv(f'{self.output_loc}/csv/procedures.csv', dtype=str, parse_dates=[1, 2], header=0)
         procedures['Principal Procedure Code'] = mappings.snomedicdbasicmap(procedures.iloc[:, 7])
+        try:
+            procedures['Principal Procedure Date'] = procedures.iloc[0].apply(lambda x: x.strftime('%Y%m%d'))
+        except Exception as e:
+            procedures['Principal Procedure Date'] = procedures.iloc[0].apply(
+                lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
         print('SUBCHECK - Procedures Shape: ', procedures.shape)
         self.output_df = self.output_df.merge(procedures[['Principal Procedure Code']],
                                               how='left', left_on='encounter_id', right_on=procedures.iloc[:, 3])
         print('Procedure info added.  Shape: ', self.output_df.shape)
         del procedures
-
-    def add_procedure_date(self):
-        procedure_dates = pd.read_csv(f'{self.output_loc}/csv/procedures.csv', dtype=str, header=0)
-        # Change to start date after, test if date appears in log first
-        procedure_dates['Principal Procedure Date'] = mappings.snomedicdbasicmap(procedure_dates.iloc[:, 0])
-        #precedure_dates['End Date] = mappings.snomedicbasicmap(procedure_dates.iloc[:, 1])
-        print('SUBCHECK - Procedure Dates Shape', procedure_dates.shape)
-        self.output_df = self.output_df.merge(procedure_dates[['Principal Procedure Date']],
-                                              how='left', left_on='Principal Procedure Code', right_on=procedure_dates.iloc[:,3])
-        print('Procedure Dates info added. Shape: ', self.output_df.shape)
-        del procedure_dates
 
     def hard_coding(self):
         self.output_df['Type of Care'] = 1
