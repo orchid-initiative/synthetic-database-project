@@ -88,11 +88,11 @@ class FormatOutput:
         del encounters
 
     def add_procedures(self):
-        procedures = pd.read_csv(f'{self.output_loc}/csv/procedures.csv', dtype=str, parse_dates=[1, 2], header=0)
+        procedures = pd.read_csv(f'{self.output_loc}/csv/procedures.csv', dtype=str, parse_dates=[0, 1], header=0)
         procedures['Principal Procedure Code'] = mappings.snomedicdbasicmap(procedures.iloc[:, 7])
         try:
             procedures['Principal Procedure Date'] = procedures.iloc[:,0].apply(lambda x: x.strftime('%Y%m%d'))
-        except AttributeError:
+        except TypeError:
             procedures['Principal Procedure Date'] = procedures.iloc[:,0].apply(
                 lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
         print('SUBCHECK - Procedures Shape: ', procedures.shape)
