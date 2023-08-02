@@ -91,12 +91,12 @@ class FormatOutput:
         procedures = pd.read_csv(f'{self.output_loc}/csv/procedures.csv', dtype=str, parse_dates=[1, 2], header=0)
         procedures['Principal Procedure Code'] = mappings.snomedicdbasicmap(procedures.iloc[:, 7])
         try:
-            procedures['Principal Procedure Date'] = procedures.iloc[0].apply(lambda x: x.strftime('%Y%m%d'))
-        except Exception as e:
-            procedures['Principal Procedure Date'] = procedures.iloc[0].apply(
+            procedures['Principal Procedure Date'] = procedures.iloc[:,0].apply(lambda x: x.strftime('%Y%m%d'))
+        except AttributeError:
+            procedures['Principal Procedure Date'] = procedures.iloc[:,0].apply(
                 lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
         print('SUBCHECK - Procedures Shape: ', procedures.shape)
-        self.output_df = self.output_df.merge(procedures[['Principal Procedure Code']],
+        self.output_df = self.output_df.merge(procedures[['Principal Procedure Code', 'Principal Procedure Date']],
                                               how='left', left_on='encounter_id', right_on=procedures.iloc[:, 3])
         print('Procedure info added.  Shape: ', self.output_df.shape)
         del procedures
