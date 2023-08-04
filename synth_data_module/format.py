@@ -7,13 +7,14 @@ import synth_data_module.mappings as mappings
 
 class FormatOutput:
     def __init__(self, facility_id, output_loc):
+        self.output_df = None
         self.output_loc = output_loc
         self.facility_id = facility_id
         self.final_fields = ['Type of Care', 'Facility Identification Number', 'Date of Birth', 'Sex', 'Ethnicity',
                              'Race', 'Not in Use', 'Admission Date', 'Point of Origin', 'Route of Admission',
                              'Type of Admission', 'Discharge Date', 'Principal Diagnosis',
                              'Present on Admission for Principal Diagnosis', 'Other Diagnosis and Present on Admission',
-                             'Principal Procedure Code', 'Principal Procedure Date',
+                             'Procedure Codes', 'Procedure Dates',
                              'Other Procedure Codes and Other Procedure Dates',
                              'External Causes of Morbidity and Present on Admission', 'Patient SSN',
                              'Disposition of Patient', 'Total Charges', 'Abstract Record Number (Optional)',
@@ -65,10 +66,10 @@ class FormatOutput:
                 lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
             encounters['Discharge Date'] = encounters.iloc[:, 2].apply(
                 lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
-        #encounters['Principal Diagnosis'] = encounters.iloc[:, 13]  # Needs mapping for ICD-10
+        # encounters['Principal Diagnosis'] = encounters.iloc[:, 13]  # Needs mapping for ICD-10
         encounters['Principal Diagnosis'] = mappings.snomedicdbasicmap(encounters.iloc[:, 13])
         encounters['Total Charges'] = encounters.iloc[:, 11].apply(lambda x: min(int(x.split('.')[0]), 9999999))
-        print('SUBCHECK - Encounters Shape: ', encounters.shape)
+        print('SUB-CHECK - Encounters Shape: ', encounters.shape)
         # Prepare and merge payers info (replace IDs with real payer data) into encounters
         payers = pd.read_csv(f'{self.output_loc}/csv/payers.csv', dtype=str, parse_dates=[1, 2], header=0)
         payers['payer_id'] = payers.iloc[:, 0]
@@ -80,7 +81,7 @@ class FormatOutput:
         # cpcds['claim_id'] = payers.iloc[:, 8]
         # cpcds['claim_poa'] = payers.iloc[:, 90]
         # cpcds['claim_principal'] = payers.iloc[:, 92]
-        print('SUBCHECK - Payers and codes merged.  Encounters Shape: ', encounters.shape)
+        print('SUB-CHECK - Payers and codes merged.  Encounters Shape: ', encounters.shape)
         self.output_df = self.output_df.merge(encounters[['encounter_id', 'Admission Date', 'Discharge Date',
                                                           'Principal Diagnosis', 'Total Charges', 'Payer Category']],
                                               how='left', left_on='patient_id', right_on=encounters.iloc[:, 3])
@@ -89,16 +90,26 @@ class FormatOutput:
 
     def add_procedures(self):
         procedures = pd.read_csv(f'{self.output_loc}/csv/procedures.csv', dtype=str, parse_dates=[0, 1], header=0)
-        procedures['Principal Procedure Code'] = mappings.snomedicdbasicmap(procedures.iloc[:, 7])
+        #procedures['Procedure Codes'] = mappings.snomedicdbasicmap(procedures.iloc[:, 4])
+        procedures['encounter_id'] = procedures.iloc[:, 3]
+        procedures['Procedure Codes'] = procedures.iloc[:, 4]
         try:
-            procedures['Principal Procedure Date'] = procedures.iloc[:,0].apply(lambda x: x.strftime('%Y%m%d'))
+            procedures['Procedure Dates'] = procedures.iloc[:, 0].apply(lambda x: x.strftime('%Y%m%d'))
         except TypeError:
-            procedures['Principal Procedure Date'] = procedures.iloc[:,0].apply(
+            procedures['Procedure Dates'] = procedures.iloc[:, 0].apply(
                 lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
-        print('SUBCHECK - Procedures Shape: ', procedures.shape)
-        self.output_df = self.output_df.merge(procedures[['Principal Procedure Code', 'Principal Procedure Date']],
-                                              how='left', left_on='encounter_id', right_on=procedures.iloc[:, 3])
-        print('Procedure info added.  Shape: ', self.output_df.shape)
+        print('SUB-CHECK - Procedures Shape pre group: ', procedures.shape)
+        print('procedure codes pre group: ', procedures.iloc[:, : 8])
+
+        procedures = procedures.groupby('encounter_id').agg(lambda x: tuple(x)).reset_index()
+        print('SUB-CHECK - Procedures Shape post group: ', procedures.shape)
+        print('procedure codes post group: ', procedures.iloc[:, : 8])
+
+        self.output_df = self.output_df.merge(procedures[['Procedure Codes', 'Procedure Dates']],
+                                              how='left', left_on='encounter_id', right_on=procedures.iloc[:, 0])
+        print('Procedures info added.  Shape: ', self.output_df.shape)
+        print('procedure codes2: ', self.output_df['Procedure Codes'])
+
         del procedures
 
     def hard_coding(self):
@@ -121,4 +132,5 @@ class FormatOutput:
         cols = list(self.output_df.columns)
         missing = list(set(self.final_fields).difference(cols))
         for col in missing:
+            print(col, " is missing, assigning null values")
             self.output_df[col] = None
