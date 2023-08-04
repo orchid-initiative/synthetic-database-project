@@ -40,4 +40,5 @@ The Summary Statistic Workbook provides an overview of the synthetic hospital di
 - AWS (permissions required): https://rileeki.signin.aws.amazon.com/console
 - Note: .jar file is required in folder, but too large to add to our free GitHub account: https://github.com/synthetichealth/synthea/wiki/Basic-Setup-and-Running
 
-
+### Git branching
+Git branching is awesome. 
