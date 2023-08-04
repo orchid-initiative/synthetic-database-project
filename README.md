@@ -41,4 +41,11 @@ The Summary Statistic Workbook provides an overview of the synthetic hospital di
 - Note: .jar file is required in folder, but too large to add to our free GitHub account: https://github.com/synthetichealth/synthea/wiki/Basic-Setup-and-Running
 
 ### Git branching
-Git branching is super awesome!
+Git branching is super awesome! 
+
+We create a branch with the following command:
+
+```
+git checkout -b my-new-branch
+```
+
