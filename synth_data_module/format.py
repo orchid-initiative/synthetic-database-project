@@ -1,15 +1,19 @@
-import time
 import datetime as dt
 import pandas as pd
 import numpy as np
 import synth_data_module.mappings as mappings
+import argparse
+import glob
+import os
+import time
 
 
 class FormatOutput:
-    def __init__(self, facility_id, output_loc):
+    def __init__(self, facility_id, output_loc, encounter_type):
         self.output_df = None
         self.output_loc = output_loc
         self.facility_id = facility_id
+        self.encounter_type = encounter_type
         self.final_fields = ['Type of Care', 'Facility Identification Number', 'Date of Birth', 'Sex', 'Ethnicity',
                              'Race', 'Not in Use', 'Admission Date', 'Point of Origin', 'Route of Admission',
                              'Type of Admission', 'Discharge Date', 'Principal Diagnosis',
@@ -24,7 +28,7 @@ class FormatOutput:
                              'Patient Address - City', 'Patient Address - State', 'Patient Address - Zip Code',
                              'Patient Address - Country Code', 'Patient Address - Homeless Indicator']
         self.add_demographics()
-        self.add_encounters()
+        self.add_encounters(encounter_type)
         self.add_procedures()
         self.hard_coding()
         self.fill_missing()
@@ -52,12 +56,12 @@ class FormatOutput:
         print('Demographics added.  Shape: ', self.output_df.shape)
         del patients
 
-    def add_encounters(self):
+    def add_encounters(self, encounter_type):
         encounters = pd.read_csv(f'{self.output_loc}/csv/encounters.csv', dtype=str, parse_dates=[1, 2], header=0)
         encounters['encounter_id'] = encounters.iloc[:, 0]
         encounters['payer_id'] = encounters.iloc[:, 6]
         encounters['EncounterClass'] = encounters.iloc[:, 7]
-        encounters = encounters.loc[encounters['EncounterClass'] == 'inpatient', :].copy()
+        encounters = encounters.loc[encounters['EncounterClass'] == encounter_type, :].copy()
         try:
             encounters['Admission Date'] = encounters.iloc[:, 1].apply(lambda x: x.strftime('%Y%m%d'))
             encounters['Discharge Date'] = encounters.iloc[:, 2].apply(lambda x: x.strftime('%Y%m%d'))
@@ -74,7 +78,7 @@ class FormatOutput:
         payers = pd.read_csv(f'{self.output_loc}/csv/payers.csv', dtype=str, parse_dates=[1, 2], header=0)
         payers['payer_id'] = payers.iloc[:, 0]
         payers['Payer Category'] = payers.apply(mappings.payer_category, axis=1).astype(str)
-        encounters = encounters.merge(payers[['payer_id','Payer Category']], how='left', left_on='payer_id',
+        encounters = encounters.merge(payers[['payer_id', 'Payer Category']], how='left', left_on='payer_id',
                                       right_on='payer_id')
         # Prepare and merge PoA codes - NOT IN USE CURRENTLY
         # cpcds = pd.read_csv(f'{self.output_loc}/cpcds/CPCDS_Claims.csv', dtype=str, parse_dates=[1, 2], header=0)
@@ -86,11 +90,13 @@ class FormatOutput:
                                                           'Principal Diagnosis', 'Total Charges', 'Payer Category']],
                                               how='left', left_on='patient_id', right_on=encounters.iloc[:, 3])
         print('Encounter info added.  Shape: ', self.output_df.shape)
+        self.output_df=self.output_df.dropna(subset=['encounter_id']).reset_index(drop=True)
+        print('Patients with no encounters of desired type dropped.  Shape: ', self.output_df.shape)
         del encounters
 
     def add_procedures(self):
         procedures = pd.read_csv(f'{self.output_loc}/csv/procedures.csv', dtype=str, parse_dates=[0, 1], header=0)
-        #procedures['Procedure Codes'] = mappings.snomedicdbasicmap(procedures.iloc[:, 4])
+        # procedures['Procedure Codes'] = mappings.snomedicdbasicmap(procedures.iloc[:, 4])
         procedures['encounter_id'] = procedures.iloc[:, 3]
         procedures['Procedure Codes'] = procedures.iloc[:, 4]
         try:
@@ -99,16 +105,16 @@ class FormatOutput:
             procedures['Procedure Dates'] = procedures.iloc[:, 0].apply(
                 lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
         print('SUB-CHECK - Procedures Shape pre group: ', procedures.shape)
-        print('procedure codes pre group: ', procedures.iloc[:, : 8])
+        # print('procedure codes pre group: ', procedures.iloc[:, : 8])
 
         procedures = procedures.groupby('encounter_id').agg(lambda x: tuple(x)).reset_index()
         print('SUB-CHECK - Procedures Shape post group: ', procedures.shape)
-        print('procedure codes post group: ', procedures.iloc[:, : 8])
+        # print('procedure codes post group: ', procedures.iloc[:, : 8])
 
         self.output_df = self.output_df.merge(procedures[['Procedure Codes', 'Procedure Dates']],
                                               how='left', left_on='encounter_id', right_on=procedures.iloc[:, 0])
         print('Procedures info added.  Shape: ', self.output_df.shape)
-        print('procedure codes2: ', self.output_df['Procedure Codes'])
+        # print('procedure codes2: ', self.output_df['Procedure Codes'])
 
         del procedures
 
@@ -134,3 +140,37 @@ class FormatOutput:
         for col in missing:
             print(col, " is missing, assigning null values")
             self.output_df[col] = None
+
+
+# Functions for maintaining data outputs and arguments for runtime
+def clear_old_files():
+    output_cpcds = 'output/cpcds/*'
+    output_csvs = 'output/csv/*'
+    output_fhirs = 'output/fhir/*'
+    output_metadata = 'output/metadata/*'
+
+    files0 = glob.glob(output_cpcds)
+    for f in files0:
+        os.remove(f)
+    files1 = glob.glob(output_csvs)
+    for f in files1:
+        os.remove(f)
+    files2 = glob.glob(output_fhirs)
+    for f in files2:
+        os.remove(f)
+    files3 = glob.glob(output_metadata)
+    for f in files3:
+        os.remove(f)
+
+
+def parse_args():
+    # Initialize parser
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-T', '--Type', help='Specify Encounter Type', choices=['inpatient', 'outpatient', 'ambulatory',
+                        'wellness', 'virtual', 'urgentcare', 'emergency'], default='inpatient')
+    args = parser.parse_args()
+    if args.Type:
+        print("Filtering for Type: % s" % args.Type)
+
+    encounter_type = args.Type
+    return encounter_type
