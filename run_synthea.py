@@ -32,27 +32,29 @@ for f in files3:
 log.printSectionHeader('Running Synthea')
 # Todo - how can we make this a relative path more generic for users?  I got "Unable to access jarfile" error without
 #   the full path specified.
-jar_file = '/home/travis/IdeaProjects/synthetic-database-project/synthea-with-dependencies.jar'
+file_path = os.path.realpath(__file__)
+dir = os.path.dirname(file_path)
+jar_file = os.path.join(dir, 'synthea-with-dependencies.jar')
 
 
 # Collect Females
 log.printSectionSubHeader('Creating Female Records')
 sub_start = time.time()
 synthea = Synthea(jar_file,'synthea_settings') # initialize the module
-synthea.specify_popSize(1252)
+synthea.specify_popSize(40)
 synthea.specify_gender('F')
 # synthea.specify_city('California', 'Pasadena')
 synthea.run_synthea()
 log.printElapsedTime(sub_start, "Females created in: ")
 
 # Collect Males
-log.printSectionSubHeader('Creating Male Records')
+'''log.printSectionSubHeader('Creating Male Records')
 sub_start = time.time()
 synthea = Synthea(jar_file, 'synthea_settings') # initialize the module
 synthea.specify_popSize(1220)
 synthea.specify_gender('M')
 synthea.run_synthea()
-log.printElapsedTime(sub_start, "Males created in: ")
+log.printElapsedTime(sub_start, "Males created in: ")'''
 
 # Format data to our desired layout
 log.printSectionHeader('Formatting Data')
