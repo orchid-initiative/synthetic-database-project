@@ -34,6 +34,7 @@ class FormatOutput:
         self.fill_missing()
         timestamp = time.time()
         date_time = dt.datetime.fromtimestamp(timestamp)
+        self.fixed_width_output()
         self.output_df[self.final_fields].to_csv(
             f'{output_loc}/formatted_data_{date_time.strftime("%d-%m-%Y_%H%M%S")}.csv', index=False)
 
@@ -140,6 +141,30 @@ class FormatOutput:
         for col in missing:
             print(col, " is missing, assigning null values")
             self.output_df[col] = None
+
+    def fixed_width_output(self):
+        field_widths = {'Type of Care': 1, 'Facility Identification Number': 6, 'Date of Birth': 8, 'Sex': 1, 'Ethnicity': 2,
+                        'Race': 10, 'Not in Use': 5, 'Admission Date': 12, 'Point of Origin': 1, 'Route of Admission': 1,
+                        'Type of Admission': 1, 'Discharge Date': 12, 'Principal Diagnosis': 7,
+                        'Present on Admission for Principal Diagnosis': 1, 'Other Diagnosis and Present on Admission': 192,
+                        'Procedure Codes': 0, 'Procedure Dates': 0,
+                        'Other Procedure Codes and Other Procedure Dates': 360,
+                        'External Causes of Morbidity and Present on Admission': 96, 'Patient SSN': 9,
+                        'Disposition of Patient': 2, 'Total Charges': 8, 'Abstract Record Number (Optional)': 12,
+                        'Prehospital Care & Resuscitation - DNR Order': 2, 'Payer Category': 2, 'Type of Coverage': 1,
+                        'Plan Code Number': 4, 'Preferred Spoken Language': 24,
+                        'Patient Address - Address Number and Street Name': 40,
+                        'Patient Address - City': 30, 'Patient Address - State':2, 'Patient Address - Zip Code': 5,
+                        'Patient Address - Country Code': 2, 'Patient Address - Homeless Indicator': 1}
+
+        for field, width in field_widths.items():
+            #if (field == 'Procedure Codes')
+                #x = max(self.output_df[field], key = len)
+                #self.output_df = df[field].str.ljust(x)
+            self.output_df = self.output_df[field].astype(str)
+            self.output_df = self.output_df[field].str.ljust(width)
+
+        print(self.output_df)
 
 
 # Functions for maintaining data outputs and arguments for runtime
