@@ -158,13 +158,30 @@ class FormatOutput:
                         'Patient Address - Country Code': 2, 'Patient Address - Homeless Indicator': 1}
 
         for field, width in field_widths.items():
-            #if (field == 'Procedure Codes')
-                #x = max(self.output_df[field], key = len)
-                #self.output_df = df[field].str.ljust(x)
-            self.output_df = self.output_df[field].astype(str)
-            self.output_df = self.output_df[field].str.ljust(width)
+            if (field == 'Plan Code Number' || field == 'Total Charges'):
+                self.output_df[field] = self.output_df[field].astype(str).str.rjust(width)
+            #if(field == 'Procedure Codes' || field == 'Procedure Dates')
+                # Create Principal Procedure Code and Date columns
+                # fixed width everything
+            else:
+                self.output_df[field] = self.output_df[field].astype(str).str.ljust(width)
+
+        print('Fixed Width Converted. Shape: ', self.output_df.shape)
 
         print(self.output_df)
+
+    #Temporary function to outline logic for adding principal data
+    def add_principal(self):
+        #self.output_df.insert(14, 'Principal Procedure Code', None)
+        #self.output_df.insert(15, 'Principal Procedure Date', None)
+
+        #or
+
+        #self.output_df['Principal Procedure Code'] = self.output_df['Procedure Codes'] <- apply some method that takes the first value in the list and transfers it to new column
+        #replicate with dates
+
+
+
 
 
 # Functions for maintaining data outputs and arguments for runtime
