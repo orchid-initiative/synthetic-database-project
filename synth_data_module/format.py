@@ -8,34 +8,51 @@ import os
 import time
 
 
+
+
 class FormatOutput:
     def __init__(self, facility_id, output_loc, encounter_type):
         self.output_df = None
         self.output_loc = output_loc
         self.facility_id = facility_id
         self.encounter_type = encounter_type
-        self.final_fields = ['Type of Care', 'Facility Identification Number', 'Date of Birth', 'Sex', 'Ethnicity',
-                             'Race', 'Not in Use', 'Admission Date', 'Point of Origin', 'Route of Admission',
-                             'Type of Admission', 'Discharge Date', 'Principal Diagnosis',
-                             'Present on Admission for Principal Diagnosis', 'Other Diagnosis and Present on Admission',
-                             'Procedure Codes', 'Procedure Dates',
-                             'Other Procedure Codes and Other Procedure Dates',
-                             'External Causes of Morbidity and Present on Admission', 'Patient SSN',
-                             'Disposition of Patient', 'Total Charges', 'Abstract Record Number (Optional)',
-                             'Prehospital Care & Resuscitation - DNR Order', 'Payer Category', 'Type of Coverage',
-                             'Plan Code Number', 'Preferred Spoken Language',
-                             'Patient Address - Address Number and Street Name',
-                             'Patient Address - City', 'Patient Address - State', 'Patient Address - Zip Code',
-                             'Patient Address - Country Code', 'Patient Address - Homeless Indicator']
+        #self.final_fields = ['Type of Care', 'Facility Identification Number', 'Date of Birth', 'Sex', 'Ethnicity',
+         #                    'Race', 'Not in Use', 'Admission Date', 'Point of Origin', 'Route of Admission',
+          #                   'Type of Admission', 'Discharge Date', 'Principal Diagnosis',
+           #                  'Present on Admission for Principal Diagnosis', 'Other Diagnosis and Present on Admission',
+            #                 'Procedure Codes', 'Procedure Dates',
+             #                'Other Procedure Codes and Other Procedure Dates',
+              #               'External Causes of Morbidity and Present on Admission', 'Patient SSN',
+               #              'Disposition of Patient', 'Total Charges', 'Abstract Record Number (Optional)',
+                #             'Prehospital Care & Resuscitation - DNR Order', 'Payer Category', 'Type of Coverage',
+                 #            'Plan Code Number', 'Preferred Spoken Language',
+                  #           'Patient Address - Address Number and Street Name',
+                   #          'Patient Address - City', 'Patient Address - State', 'Patient Address - Zip Code',
+                    #         'Patient Address - Country Code', 'Patient Address - Homeless Indicator']
+        self.final_fields = [{'name': 'Type of Care', 'length': 1, 'justification': 'left'}, {'name': 'Facility Identification Number', 'length': 6, 'justification': 'left'},
+                             {'name': 'Date of Birth', 'length': 8, 'justification': 'left'}, {'name': 'Sex', 'length': 1, 'justification': 'left'}, {'name': 'Ethnicity', 'length': 2, 'justification': 'left'},
+                             {'name': 'Race', 'length': 10, 'justification': 'left'}, {'name': 'Not in Use', 'length': 5, 'justification': 'left'}, {'name': 'Admission Date', 'length': 12, 'justification': 'left'},
+                             {'name': 'Point of Origin', 'length': 1, 'justification': 'left'}, {'name': 'Route of Admission', 'length': 1, 'justification': 'left'}, {'name': 'Type of Admission', 'length': 1, 'justification': 'left'},
+                             {'name': 'Discharge Date', 'length': 12, 'justification': 'left'}, {'name': 'Principal Diagnosis', 'length': 7, 'justification': 'left'}, {'name': 'Present on Admission for Principal Diagnosis', 'length': 1, 'justification': 'left'},
+                             {'name': 'Other Diagnosis and Present on Admission', 'length': 192, 'justification': 'left'}, {'name': 'Procedure Codes', 'length': 375, 'justification': 'left'}, {'name': 'Procedure Dates', 'length': 375, 'justification': 'left'},
+                             {'name': 'Other Procedure Codes and Other Procedure Dates', 'length': 0, 'justification': 'left'}, {'name': 'External Causes of Morbidity and Present on Admission', 'length': 96, 'justification': 'left'}, {'name': 'Patient SSN', 'length': 9, 'justification': 'left'},
+                             {'name': 'Disposition of Patient', 'length': 2, 'justification': 'left'}, {'name': 'Total Charges', 'length': 8, 'justification': 'right'}, {'name': 'Abstract Record Number (Optional)', 'length': 12, 'justification': 'left'},
+                             {'name': 'Prehospital Care & Resuscitation - DNR Order', 'length': 2, 'justification': 'left'}, {'name': 'Payer Category', 'length': 2, 'justification': 'left'}, {'name': 'Type of Coverage', 'length': 1, 'justification': 'left'},
+                             {'name': 'Plan Code Number', 'length': 4, 'justification': 'right'},{'name': 'Preferred Spoken Language', 'length': 24, 'justification': 'left'}, {'name': 'Patient Address - Address Number and Street Name', 'length': 40, 'justification': 'left'},
+                             {'name': 'Patient Address - City', 'length': 30, 'justification': 'left'}, {'name': 'Patient Address - State', 'length': 2, 'justification': 'left'},
+                             {'name': 'Patient Address - Zip Code', 'length': 5, 'justification': 'left'}, {'name': 'Patient Address - Country Code', 'length': 2, 'justification': 'left'},
+                             {'name': 'Patient Address - Homeless Indicator', 'length': 1, 'justification': 'left'}]
+        self.fields_info = pd.DataFrame.from_dict(self.final_fields)
         self.add_demographics()
         self.add_encounters(encounter_type)
         self.add_procedures()
         self.hard_coding()
         self.fill_missing()
+        self.fixed_width_output()
         timestamp = time.time()
         date_time = dt.datetime.fromtimestamp(timestamp)
-        self.fixed_width_output()
-        self.output_df[self.final_fields].to_csv(
+        #self.fixed_width_output()
+        self.output_df[self.fields_info['name'].tolist()].to_csv(
             f'{output_loc}/formatted_data_{date_time.strftime("%d-%m-%Y_%H%M%S")}.csv', index=False)
 
     def add_demographics(self, ):
@@ -137,28 +154,14 @@ class FormatOutput:
 
     def fill_missing(self):
         cols = list(self.output_df.columns)
-        missing = list(set(self.final_fields).difference(cols))
+        missing = list(set(self.fields_info['name'].tolist()).difference(cols))
         for col in missing:
             print(col, " is missing, assigning null values")
             self.output_df[col] = None
 
     def fixed_width_output(self):
-        field_widths = {'Type of Care': 1, 'Facility Identification Number': 6, 'Date of Birth': 8, 'Sex': 1, 'Ethnicity': 2,
-                        'Race': 10, 'Not in Use': 5, 'Admission Date': 12, 'Point of Origin': 1, 'Route of Admission': 1,
-                        'Type of Admission': 1, 'Discharge Date': 12, 'Principal Diagnosis': 7,
-                        'Present on Admission for Principal Diagnosis': 1, 'Other Diagnosis and Present on Admission': 192,
-                        'Procedure Codes': 0, 'Procedure Dates': 0,
-                        'Other Procedure Codes and Other Procedure Dates': 360,
-                        'External Causes of Morbidity and Present on Admission': 96, 'Patient SSN': 9,
-                        'Disposition of Patient': 2, 'Total Charges': 8, 'Abstract Record Number (Optional)': 12,
-                        'Prehospital Care & Resuscitation - DNR Order': 2, 'Payer Category': 2, 'Type of Coverage': 1,
-                        'Plan Code Number': 4, 'Preferred Spoken Language': 24,
-                        'Patient Address - Address Number and Street Name': 40,
-                        'Patient Address - City': 30, 'Patient Address - State':2, 'Patient Address - Zip Code': 5,
-                        'Patient Address - Country Code': 2, 'Patient Address - Homeless Indicator': 1}
-
-        for field, width in field_widths.items():
-            if (field == 'Plan Code Number' || field == 'Total Charges'):
+        '''for field, width in field_widths.items():
+            if (field == 'Plan Code Number' or field == 'Total Charges'):
                 self.output_df[field] = self.output_df[field].astype(str).str.rjust(width)
             #if(field == 'Procedure Codes' || field == 'Procedure Dates')
                 # Create Principal Procedure Code and Date columns
@@ -168,17 +171,24 @@ class FormatOutput:
 
         print('Fixed Width Converted. Shape: ', self.output_df.shape)
 
-        print(self.output_df)
+        print(self.output_df.to_string())'''
+        formats = []
+        for width, justification in zip(self.fields_info.length, self.fields_info.justification):
+            format = ''
+            if justification == 'left':
+                format = '{' + f':<{width}' + '}'
+            else:
+                format = '{' + f':>{width}' + '}'
+            formats.append(format)
 
-    #Temporary function to outline logic for adding principal data
-    def add_principal(self):
-        #self.output_df.insert(14, 'Principal Procedure Code', None)
-        #self.output_df.insert(15, 'Principal Procedure Date', None)
+        fixed_width_str = ''
 
-        #or
+        for _, row in self.output_df.iterrows():
+            formatted_row = [fmt.format(str(x)) for fmt, x in zip(formats, row) if type(x) is not tuple]
+            fixed_width_str += '   '.join(formatted_row) + '\n'
 
-        #self.output_df['Principal Procedure Code'] = self.output_df['Procedure Codes'] <- apply some method that takes the first value in the list and transfers it to new column
-        #replicate with dates
+        print(fixed_width_str)
+
 
 
 
