@@ -29,6 +29,7 @@ class FormatOutput:
                   #           'Patient Address - Address Number and Street Name',
                    #          'Patient Address - City', 'Patient Address - State', 'Patient Address - Zip Code',
                     #         'Patient Address - Country Code', 'Patient Address - Homeless Indicator']
+        #insert procedures list, diagnosis list, and External Causes of Morbitity/Present on Admission list
         self.final_fields = [{'name': 'Type of Care', 'length': 1, 'justification': 'left'}, {'name': 'Facility Identification Number', 'length': 6, 'justification': 'left'},
                              {'name': 'Date of Birth', 'length': 8, 'justification': 'left'}, {'name': 'Sex', 'length': 1, 'justification': 'left'}, {'name': 'Ethnicity', 'length': 2, 'justification': 'left'},
                              {'name': 'Race', 'length': 10, 'justification': 'left'}, {'name': 'Not in Use', 'length': 5, 'justification': 'left'}, {'name': 'Admission Date', 'length': 12, 'justification': 'left'},
@@ -160,34 +161,32 @@ class FormatOutput:
             self.output_df[col] = None
 
     def fixed_width_output(self):
-        '''for field, width in field_widths.items():
-            if (field == 'Plan Code Number' or field == 'Total Charges'):
-                self.output_df[field] = self.output_df[field].astype(str).str.rjust(width)
-            #if(field == 'Procedure Codes' || field == 'Procedure Dates')
-                # Create Principal Procedure Code and Date columns
-                # fixed width everything
-            else:
-                self.output_df[field] = self.output_df[field].astype(str).str.ljust(width)
+        df = self.output_df.copy(deep = True)
 
-        print('Fixed Width Converted. Shape: ', self.output_df.shape)
-
-        print(self.output_df.to_string())'''
         formats = []
         for width, justification in zip(self.fields_info.length, self.fields_info.justification):
             format = ''
             if justification == 'left':
-                format = '{' + f':<{width}' + '}'
+                fmt = '{' + f':<{width}' + '}'
+                fmt = fmt.format
             else:
-                format = '{' + f':>{width}' + '}'
-            formats.append(format)
+                fmt = '{' + f':>{width}' + '}'
+                fmt = fmt.format
+            formats.append(fmt)
 
-        fixed_width_str = ''
+        columns = self.fields_info['name'].tolist()
 
-        for _, row in self.output_df.iterrows():
-            formatted_row = [fmt.format(str(x)) for fmt, x in zip(formats, row) if type(x) is not tuple]
-            fixed_width_str += '   '.join(formatted_row) + '\n'
+        formatters = {key: value for key, value in zip(columns, formats) if key != 'Procedure Codes' and key != 'Procedure Dates'}
+
+        fixed_width_str = df.to_string(formatters = formatters, col_space = 2, header = False, index = False)
+
+        print('Fixed Width Converted. Shape: ', self.output_df.shape)
 
         print(fixed_width_str)
+
+
+
+
 
 
 
