@@ -16,20 +16,7 @@ class FormatOutput:
         self.output_loc = output_loc
         self.facility_id = facility_id
         self.encounter_type = encounter_type
-        #self.final_fields = ['Type of Care', 'Facility Identification Number', 'Date of Birth', 'Sex', 'Ethnicity',
-         #                    'Race', 'Not in Use', 'Admission Date', 'Point of Origin', 'Route of Admission',
-          #                   'Type of Admission', 'Discharge Date', 'Principal Diagnosis',
-           #                  'Present on Admission for Principal Diagnosis', 'Other Diagnosis and Present on Admission',
-            #                 'Procedure Codes', 'Procedure Dates',
-             #                'Other Procedure Codes and Other Procedure Dates',
-              #               'External Causes of Morbidity and Present on Admission', 'Patient SSN',
-               #              'Disposition of Patient', 'Total Charges', 'Abstract Record Number (Optional)',
-                #             'Prehospital Care & Resuscitation - DNR Order', 'Payer Category', 'Type of Coverage',
-                 #            'Plan Code Number', 'Preferred Spoken Language',
-                  #           'Patient Address - Address Number and Street Name',
-                   #          'Patient Address - City', 'Patient Address - State', 'Patient Address - Zip Code',
-                    #         'Patient Address - Country Code', 'Patient Address - Homeless Indicator']
-        #insert procedures list, diagnosis list, and External Causes of Morbitity/Present on Admission list
+        procedure_list = self.get_procedure_list()
         self.final_fields = [{'name': 'Type of Care', 'length': 1, 'justification': 'left'}, {'name': 'Facility Identification Number', 'length': 6, 'justification': 'left'},
                              {'name': 'Date of Birth', 'length': 8, 'justification': 'left'}, {'name': 'Sex', 'length': 1, 'justification': 'left'}, {'name': 'Ethnicity', 'length': 2, 'justification': 'left'},
                              {'name': 'Race', 'length': 10, 'justification': 'left'}, {'name': 'Not in Use', 'length': 5, 'justification': 'left'}, {'name': 'Admission Date', 'length': 12, 'justification': 'left'},
@@ -130,10 +117,30 @@ class FormatOutput:
         print('SUB-CHECK - Procedures Shape post group: ', procedures.shape)
         # print('procedure codes post group: ', procedures.iloc[:, : 8])
 
+
         self.output_df = self.output_df.merge(procedures[['Procedure Codes', 'Procedure Dates']],
                                               how='left', left_on='encounter_id', right_on=procedures.iloc[:, 0])
         print('Procedures info added.  Shape: ', self.output_df.shape)
         # print('procedure codes2: ', self.output_df['Procedure Codes'])
+
+
+        for code_list, date_list in zip(self.output_df['Procedure Codes'], self.output_df['Procedure Dates']):
+            if isinstance(code_list, tuple) and isinstance(date_list, tuple):
+                for code, date, i in zip(code_list, date_list, range(1, 25)):
+                    code_field = ''
+                    date_field = ''
+                    if i == 1:
+                        code_field = 'Principal Procedure Code'
+                        date_field = 'Principal Procedure Date'
+                    else:
+                        code_field = f'Procedure Code {i}'
+                        date_field = f'Procedure Date {i}'
+
+                    self.output_df[code_field] = code
+                    self.output_df[date_field] = date
+                
+        print('Procedure info formatted.   Shape: ', self.output_df.shape)
+
 
         del procedures
 
@@ -184,8 +191,15 @@ class FormatOutput:
 
         print(fixed_width_str)
 
+    def get_procedure_list(self):
+        procedure_list = []
+        for i in range(2, 25):
+            code = {'name': f'Procedure Code {i}', 'length': 7, 'justification': 'left'}
+            procedure_list.append(code)
+            date = {'name': f'Procedure Date {i}', 'length': 8, 'justification': 'left'}
+            procedure_list.append(date)
 
-
+        return procedure_list
 
 
 
