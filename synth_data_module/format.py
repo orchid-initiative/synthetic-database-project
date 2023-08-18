@@ -22,7 +22,7 @@ class FormatOutput:
                              {'name': 'Race', 'length': 10, 'justification': 'left'}, {'name': 'Not in Use', 'length': 5, 'justification': 'left'}, {'name': 'Admission Date', 'length': 12, 'justification': 'left'},
                              {'name': 'Point of Origin', 'length': 1, 'justification': 'left'}, {'name': 'Route of Admission', 'length': 1, 'justification': 'left'}, {'name': 'Type of Admission', 'length': 1, 'justification': 'left'},
                              {'name': 'Discharge Date', 'length': 12, 'justification': 'left'}, {'name': 'Principal Diagnosis', 'length': 7, 'justification': 'left'}, {'name': 'Present on Admission for Principal Diagnosis', 'length': 1, 'justification': 'left'},
-                             {'name': 'Other Diagnosis and Present on Admission', 'length': 192, 'justification': 'left'}, {'name': 'Procedure Codes', 'length': 375, 'justification': 'left'}, {'name': 'Procedure Dates', 'length': 375, 'justification': 'left'},
+                             {'name': 'Other Diagnosis and Present on Admission', 'length': 192, 'justification': 'left'}] + procedure_list +[ {'name': 'Procedure Codes', 'length': 375, 'justification': 'left'}, {'name': 'Procedure Dates', 'length': 375, 'justification': 'left'},
                              {'name': 'Other Procedure Codes and Other Procedure Dates', 'length': 0, 'justification': 'left'}, {'name': 'External Causes of Morbidity and Present on Admission', 'length': 96, 'justification': 'left'}, {'name': 'Patient SSN', 'length': 9, 'justification': 'left'},
                              {'name': 'Disposition of Patient', 'length': 2, 'justification': 'left'}, {'name': 'Total Charges', 'length': 8, 'justification': 'right'}, {'name': 'Abstract Record Number (Optional)', 'length': 12, 'justification': 'left'},
                              {'name': 'Prehospital Care & Resuscitation - DNR Order', 'length': 2, 'justification': 'left'}, {'name': 'Payer Category', 'length': 2, 'justification': 'left'}, {'name': 'Type of Coverage', 'length': 1, 'justification': 'left'},
@@ -125,6 +125,8 @@ class FormatOutput:
 
 
         for code_list, date_list in zip(self.output_df['Procedure Codes'], self.output_df['Procedure Dates']):
+            row_counter = 0
+            print('Counter Reset')
             if isinstance(code_list, tuple) and isinstance(date_list, tuple):
                 for code, date, i in zip(code_list, date_list, range(1, 25)):
                     code_field = ''
@@ -136,8 +138,9 @@ class FormatOutput:
                         code_field = f'Procedure Code {i}'
                         date_field = f'Procedure Date {i}'
 
-                    self.output_df[code_field] = code
-                    self.output_df[date_field] = date
+                    self.output_df.loc[row_counter, code_field] = code
+                    self.output_df.loc[row_counter, date_field] = date
+                row_counter += 1
                 
         print('Procedure info formatted.   Shape: ', self.output_df.shape)
 
