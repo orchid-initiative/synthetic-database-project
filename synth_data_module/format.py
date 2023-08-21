@@ -123,9 +123,8 @@ class FormatOutput:
         print('Procedures info added.  Shape: ', self.output_df.shape)
         # print('procedure codes2: ', self.output_df['Procedure Codes'])
 
-
+        '''row_counter = 0
         for code_list, date_list in zip(self.output_df['Procedure Codes'], self.output_df['Procedure Dates']):
-            row_counter = 0
             print('Counter Reset')
             if isinstance(code_list, tuple) and isinstance(date_list, tuple):
                 for code, date, i in zip(code_list, date_list, range(1, 25)):
@@ -140,12 +139,37 @@ class FormatOutput:
 
                     self.output_df.loc[row_counter, code_field] = code
                     self.output_df.loc[row_counter, date_field] = date
-                row_counter += 1
+            row_counter += 1'''
+
+        #for row in self.output_df.rows:
+            #self.output_df.apply(modify_row, axis=1, args(['Procedure Codes', 'Procedure Dates'], ['Procedure Code', 'Procedure Date']))
                 
         print('Procedure info formatted.   Shape: ', self.output_df.shape)
 
 
         del procedures
+
+    def modify_row(self, row, df_fields, new_fields):
+        first = row[df_fields[0]]
+        second = row[df_fields[1]]
+
+        if 'Procedure Codes' in df_fields:
+            if isinstance(first, tuple) and isinstance(second, tuple):
+                for code, date, i in zip(code_list, date_list, range(1, 25)):
+                    if i == 1:
+                        self.output_df['Principal Procedure Code'] = code
+                        self.output_df['Principal Procedure Date'] = date
+                    else:
+                        self.output_df[f'{new_fields[0]} {i}'] = code
+                        self.output_df[f'{new_fields[1]} {i}'] = date
+
+        # Where does all the diagnoses information come from
+        # where does the external causes of morbidity information come from
+
+
+
+
+
 
     def hard_coding(self):
         self.output_df['Type of Care'] = 1
