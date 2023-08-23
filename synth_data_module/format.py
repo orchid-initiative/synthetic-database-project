@@ -2,7 +2,6 @@ import datetime as dt
 import pandas as pd
 import numpy as np
 import synth_data_module.mappings as mappings
-import argparse
 import glob
 import os
 import time
@@ -212,16 +211,3 @@ def clear_old_files():
     files3 = glob.glob(output_metadata)
     for f in files3:
         os.remove(f)
-
-
-def parse_args():
-    # Initialize parser
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-T', '--Type', help='Specify Encounter Type', choices=['inpatient', 'outpatient', 'ambulatory',
-                        'wellness', 'virtual', 'urgentcare', 'emergency'], default='inpatient')
-    args = parser.parse_args()
-    if args.Type:
-        print("Filtering for Type: % s" % args.Type)
-
-    encounter_type = args.Type
-    return encounter_type
