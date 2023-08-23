@@ -141,33 +141,12 @@ class FormatOutput:
                     self.output_df.loc[row_counter, date_field] = date
             row_counter += 1'''
 
-        #for row in self.output_df.rows:
-            #self.output_df.apply(modify_row, axis=1, args(['Procedure Codes', 'Procedure Dates'], ['Procedure Code', 'Procedure Date']))
+        self.output_df = self.output_df.apply(modify_row, axis=1, args=(['Procedure Codes', 'Procedure Dates'], ['Procedure Code', 'Procedure Date']))
                 
         print('Procedure info formatted.   Shape: ', self.output_df.shape)
 
 
         del procedures
-
-    def modify_row(self, row, df_fields, new_fields):
-        first = row[df_fields[0]]
-        second = row[df_fields[1]]
-
-        if 'Procedure Codes' in df_fields:
-            if isinstance(first, tuple) and isinstance(second, tuple):
-                for code, date, i in zip(code_list, date_list, range(1, 25)):
-                    if i == 1:
-                        self.output_df['Principal Procedure Code'] = code
-                        self.output_df['Principal Procedure Date'] = date
-                    else:
-                        self.output_df[f'{new_fields[0]} {i}'] = code
-                        self.output_df[f'{new_fields[1]} {i}'] = date
-
-        # Where does all the diagnoses information come from
-        # where does the external causes of morbidity information come from
-
-
-
 
 
 
@@ -212,6 +191,8 @@ class FormatOutput:
 
         formatters = {key: value for key, value in zip(columns, formats) if key != 'Procedure Codes' and key != 'Procedure Dates'}
 
+        print(formatters)
+
         fixed_width_str = df.to_string(formatters = formatters, col_space = 2, header = False, index = False)
 
         print('Fixed Width Converted. Shape: ', self.output_df.shape)
@@ -229,7 +210,20 @@ class FormatOutput:
         return procedure_list
 
 
+def modify_row(row, df_fields, new_fields):
+    first = row[df_fields[0]]
+    second = row[df_fields[1]]
 
+    if True: #'Procedure Codes' in df_fields:
+        if isinstance(first, tuple) and isinstance(second, tuple):
+            for code, date, i in zip(first, second, range(1, 25)):
+                if i == 1:
+                    row[f'Principal {new_fields[0]}'] = code
+                    row[f'Principal {new_fields[1]}'] = date
+                else:
+                    row[f'{new_fields[0]} {i}'] = code
+                    row[f'{new_fields[1]} {i}'] = date
+    return row
 
 
 
