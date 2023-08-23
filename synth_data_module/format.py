@@ -2,7 +2,6 @@ import datetime as dt
 import pandas as pd
 import numpy as np
 import synth_data_module.mappings as mappings
-import argparse
 import glob
 import os
 import time
@@ -22,7 +21,7 @@ class FormatOutput:
                              {'name': 'Race', 'length': 10, 'justification': 'left'}, {'name': 'Not in Use', 'length': 5, 'justification': 'left'}, {'name': 'Admission Date', 'length': 12, 'justification': 'left'},
                              {'name': 'Point of Origin', 'length': 1, 'justification': 'left'}, {'name': 'Route of Admission', 'length': 1, 'justification': 'left'}, {'name': 'Type of Admission', 'length': 1, 'justification': 'left'},
                              {'name': 'Discharge Date', 'length': 12, 'justification': 'left'}, {'name': 'Principal Diagnosis', 'length': 7, 'justification': 'left'}, {'name': 'Present on Admission for Principal Diagnosis', 'length': 1, 'justification': 'left'},
-                             {'name': 'Other Diagnosis and Present on Admission', 'length': 192, 'justification': 'left'}] + procedure_list +[ {'name': 'Procedure Codes', 'length': 375, 'justification': 'left'}, {'name': 'Procedure Dates', 'length': 375, 'justification': 'left'},
+                             {'name': 'Other Diagnosis and Present on Admission', 'length': 192, 'justification': 'left'}]  + procedure_list +[ {'name': 'Procedure Codes', 'length': 375, 'justification': 'left'}, {'name': 'Procedure Dates', 'length': 375, 'justification': 'left'},
                              {'name': 'Other Procedure Codes and Other Procedure Dates', 'length': 0, 'justification': 'left'}, {'name': 'External Causes of Morbidity and Present on Admission', 'length': 96, 'justification': 'left'}, {'name': 'Patient SSN', 'length': 9, 'justification': 'left'},
                              {'name': 'Disposition of Patient', 'length': 2, 'justification': 'left'}, {'name': 'Total Charges', 'length': 8, 'justification': 'right'}, {'name': 'Abstract Record Number (Optional)', 'length': 12, 'justification': 'left'},
                              {'name': 'Prehospital Care & Resuscitation - DNR Order', 'length': 2, 'justification': 'left'}, {'name': 'Payer Category', 'length': 2, 'justification': 'left'}, {'name': 'Type of Coverage', 'length': 1, 'justification': 'left'},
@@ -247,16 +246,3 @@ def clear_old_files():
     files3 = glob.glob(output_metadata)
     for f in files3:
         os.remove(f)
-
-
-def parse_args():
-    # Initialize parser
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-T', '--Type', help='Specify Encounter Type', choices=['inpatient', 'outpatient', 'ambulatory',
-                        'wellness', 'virtual', 'urgentcare', 'emergency'], default='inpatient')
-    args = parser.parse_args()
-    if args.Type:
-        print("Filtering for Type: % s" % args.Type)
-
-    encounter_type = args.Type
-    return encounter_type
