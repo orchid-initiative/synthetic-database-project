@@ -15,26 +15,13 @@ class FormatOutput:
         self.output_loc = output_loc
         self.facility_id = facility_id
         self.encounter_type = encounter_type
-        #self.final_fields = ['Type of Care', 'Facility Identification Number', 'Date of Birth', 'Sex', 'Ethnicity',
-         #                    'Race', 'Not in Use', 'Admission Date', 'Point of Origin', 'Route of Admission',
-          #                   'Type of Admission', 'Discharge Date', 'Principal Diagnosis',
-           #                  'Present on Admission for Principal Diagnosis', 'Other Diagnosis and Present on Admission',
-            #                 'Procedure Codes', 'Procedure Dates',
-             #                'Other Procedure Codes and Other Procedure Dates',
-              #               'External Causes of Morbidity and Present on Admission', 'Patient SSN',
-               #              'Disposition of Patient', 'Total Charges', 'Abstract Record Number (Optional)',
-                #             'Prehospital Care & Resuscitation - DNR Order', 'Payer Category', 'Type of Coverage',
-                 #            'Plan Code Number', 'Preferred Spoken Language',
-                  #           'Patient Address - Address Number and Street Name',
-                   #          'Patient Address - City', 'Patient Address - State', 'Patient Address - Zip Code',
-                    #         'Patient Address - Country Code', 'Patient Address - Homeless Indicator']
-        #insert procedures list, diagnosis list, and External Causes of Morbitity/Present on Admission list
+        procedure_list = self.get_procedure_list()
         self.final_fields = [{'name': 'Type of Care', 'length': 1, 'justification': 'left'}, {'name': 'Facility Identification Number', 'length': 6, 'justification': 'left'},
                              {'name': 'Date of Birth', 'length': 8, 'justification': 'left'}, {'name': 'Sex', 'length': 1, 'justification': 'left'}, {'name': 'Ethnicity', 'length': 2, 'justification': 'left'},
                              {'name': 'Race', 'length': 10, 'justification': 'left'}, {'name': 'Not in Use', 'length': 5, 'justification': 'left'}, {'name': 'Admission Date', 'length': 12, 'justification': 'left'},
                              {'name': 'Point of Origin', 'length': 1, 'justification': 'left'}, {'name': 'Route of Admission', 'length': 1, 'justification': 'left'}, {'name': 'Type of Admission', 'length': 1, 'justification': 'left'},
                              {'name': 'Discharge Date', 'length': 12, 'justification': 'left'}, {'name': 'Principal Diagnosis', 'length': 7, 'justification': 'left'}, {'name': 'Present on Admission for Principal Diagnosis', 'length': 1, 'justification': 'left'},
-                             {'name': 'Other Diagnosis and Present on Admission', 'length': 192, 'justification': 'left'}, {'name': 'Procedure Codes', 'length': 375, 'justification': 'left'}, {'name': 'Procedure Dates', 'length': 375, 'justification': 'left'},
+                             {'name': 'Other Diagnosis and Present on Admission', 'length': 192, 'justification': 'left'}] + procedure_list +[ {'name': 'Procedure Codes', 'length': 375, 'justification': 'left'}, {'name': 'Procedure Dates', 'length': 375, 'justification': 'left'},
                              {'name': 'Other Procedure Codes and Other Procedure Dates', 'length': 0, 'justification': 'left'}, {'name': 'External Causes of Morbidity and Present on Admission', 'length': 96, 'justification': 'left'}, {'name': 'Patient SSN', 'length': 9, 'justification': 'left'},
                              {'name': 'Disposition of Patient', 'length': 2, 'justification': 'left'}, {'name': 'Total Charges', 'length': 8, 'justification': 'right'}, {'name': 'Abstract Record Number (Optional)', 'length': 12, 'justification': 'left'},
                              {'name': 'Prehospital Care & Resuscitation - DNR Order', 'length': 2, 'justification': 'left'}, {'name': 'Payer Category', 'length': 2, 'justification': 'left'}, {'name': 'Type of Coverage', 'length': 1, 'justification': 'left'},
@@ -129,12 +116,38 @@ class FormatOutput:
         print('SUB-CHECK - Procedures Shape post group: ', procedures.shape)
         # print('procedure codes post group: ', procedures.iloc[:, : 8])
 
+
         self.output_df = self.output_df.merge(procedures[['Procedure Codes', 'Procedure Dates']],
                                               how='left', left_on='encounter_id', right_on=procedures.iloc[:, 0])
         print('Procedures info added.  Shape: ', self.output_df.shape)
         # print('procedure codes2: ', self.output_df['Procedure Codes'])
 
+        '''row_counter = 0
+        for code_list, date_list in zip(self.output_df['Procedure Codes'], self.output_df['Procedure Dates']):
+            print('Counter Reset')
+            if isinstance(code_list, tuple) and isinstance(date_list, tuple):
+                for code, date, i in zip(code_list, date_list, range(1, 25)):
+                    code_field = ''
+                    date_field = ''
+                    if i == 1:
+                        code_field = 'Principal Procedure Code'
+                        date_field = 'Principal Procedure Date'
+                    else:
+                        code_field = f'Procedure Code {i}'
+                        date_field = f'Procedure Date {i}'
+
+                    self.output_df.loc[row_counter, code_field] = code
+                    self.output_df.loc[row_counter, date_field] = date
+            row_counter += 1'''
+
+        self.output_df = self.output_df.apply(modify_row, axis=1, args=(['Procedure Codes', 'Procedure Dates'], ['Procedure Code', 'Procedure Date']))
+                
+        print('Procedure info formatted.   Shape: ', self.output_df.shape)
+
+
         del procedures
+
+
 
     def hard_coding(self):
         self.output_df['Type of Care'] = 1
@@ -177,17 +190,39 @@ class FormatOutput:
 
         formatters = {key: value for key, value in zip(columns, formats) if key != 'Procedure Codes' and key != 'Procedure Dates'}
 
+        print(formatters)
+
         fixed_width_str = df.to_string(formatters = formatters, col_space = 2, header = False, index = False)
 
         print('Fixed Width Converted. Shape: ', self.output_df.shape)
 
         print(fixed_width_str)
 
+    def get_procedure_list(self):
+        procedure_list = []
+        for i in range(2, 25):
+            code = {'name': f'Procedure Code {i}', 'length': 7, 'justification': 'left'}
+            procedure_list.append(code)
+            date = {'name': f'Procedure Date {i}', 'length': 8, 'justification': 'left'}
+            procedure_list.append(date)
+
+        return procedure_list
 
 
+def modify_row(row, df_fields, new_fields):
+    first = row[df_fields[0]]
+    second = row[df_fields[1]]
 
-
-
+    if True: #'Procedure Codes' in df_fields:
+        if isinstance(first, tuple) and isinstance(second, tuple):
+            for code, date, i in zip(first, second, range(1, 25)):
+                if i == 1:
+                    row[f'Principal {new_fields[0]}'] = code
+                    row[f'Principal {new_fields[1]}'] = date
+                else:
+                    row[f'{new_fields[0]} {i}'] = code
+                    row[f'{new_fields[1]} {i}'] = date
+    return row
 
 
 
