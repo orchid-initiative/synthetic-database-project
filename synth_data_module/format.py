@@ -134,7 +134,7 @@ class FormatOutput:
         diagnosis = pd.read_csv(f'{self.output_loc}/cpcds/CPCDS_Claims.csv', dtype=str, header=0)
 
         diagnosis['encounter_id'] = diagnosis.iloc[:, 8]
-        diagnosis['Diagnosis Codes'] = mappings.snomedicdbasicmap(diagnosis.iloc[:, 91])
+        diagnosis['Diagnosis Codes'] = mappings.snomedicdbasicmap(diagnosis.iloc[:, 88])
 
         print('SUB-CHECK - Diagnosis Shape pre group: ', diagnosis.shape)
 
