@@ -17,19 +17,20 @@ class FormatOutput:
         self.encounter_type = encounter_type
         procedure_list = self.get_procedure_list()
         diagnosis_list = self.get_diagnosis_list()
-        self.final_fields = [{'name': 'Type of Care', 'length': 1, 'justification': 'left'}, {'name': 'Facility Identification Number', 'length': 6, 'justification': 'left'},
+        self.final_fields = ([{'name': 'Type of Care', 'length': 1, 'justification': 'left'}, {'name': 'Facility Identification Number', 'length': 6, 'justification': 'left'},
                              {'name': 'Date of Birth', 'length': 8, 'justification': 'left'}, {'name': 'Sex', 'length': 1, 'justification': 'left'}, {'name': 'Ethnicity', 'length': 2, 'justification': 'left'},
                              {'name': 'Race', 'length': 10, 'justification': 'left'}, {'name': 'Not in Use', 'length': 5, 'justification': 'left'}, {'name': 'Admission Date', 'length': 12, 'justification': 'left'},
                              {'name': 'Point of Origin', 'length': 1, 'justification': 'left'}, {'name': 'Route of Admission', 'length': 1, 'justification': 'left'}, {'name': 'Type of Admission', 'length': 1, 'justification': 'left'},
-                             {'name': 'Discharge Date', 'length': 12, 'justification': 'left'}, {'name': 'Principal Diagnosis', 'length': 7, 'justification': 'left'},{'name': 'Diagnosis Codes', 'length': 250, 'justification': 'left'}, {'name': 'Present on Admission for Principal Diagnosis', 'length': 1, 'justification': 'left'},
-                             {'name': 'Other Diagnosis and Present on Admission', 'length': 192, 'justification': 'left'}] + procedure_list +[ {'name': 'Procedure Codes', 'length': 375, 'justification': 'left'}, {'name': 'Procedure Dates', 'length': 375, 'justification': 'left'},
+                             {'name': 'Discharge Date', 'length': 12, 'justification': 'left'}, {'name': 'Principal Diagnosis', 'length': 7, 'justification': 'left'},
+                             {'name': 'Present on Admission for Principal Diagnosis', 'length': 1, 'justification': 'left'}] + diagnosis_list + [{'name': 'Diagnosis Codes', 'length': 250, 'justification': 'left'}, {'name': 'Present on Admission', 'length': 100, 'justification': 'left'}]
+                             + procedure_list + [{'name': 'Procedure Codes', 'length': 375, 'justification': 'left'}, {'name': 'Procedure Dates', 'length': 375, 'justification': 'left'},
                              {'name': 'Other Procedure Codes and Other Procedure Dates', 'length': 0, 'justification': 'left'}, {'name': 'External Causes of Morbidity and Present on Admission', 'length': 96, 'justification': 'left'}, {'name': 'Patient SSN', 'length': 9, 'justification': 'left'},
                              {'name': 'Disposition of Patient', 'length': 2, 'justification': 'left'}, {'name': 'Total Charges', 'length': 8, 'justification': 'right'}, {'name': 'Abstract Record Number (Optional)', 'length': 12, 'justification': 'left'},
                              {'name': 'Prehospital Care & Resuscitation - DNR Order', 'length': 2, 'justification': 'left'}, {'name': 'Payer Category', 'length': 2, 'justification': 'left'}, {'name': 'Type of Coverage', 'length': 1, 'justification': 'left'},
                              {'name': 'Plan Code Number', 'length': 4, 'justification': 'right'},{'name': 'Preferred Spoken Language', 'length': 24, 'justification': 'left'}, {'name': 'Patient Address - Address Number and Street Name', 'length': 40, 'justification': 'left'},
                              {'name': 'Patient Address - City', 'length': 30, 'justification': 'left'}, {'name': 'Patient Address - State', 'length': 2, 'justification': 'left'},
                              {'name': 'Patient Address - Zip Code', 'length': 5, 'justification': 'left'}, {'name': 'Patient Address - Country Code', 'length': 2, 'justification': 'left'},
-                             {'name': 'Patient Address - Homeless Indicator', 'length': 1, 'justification': 'left'}]
+                             {'name': 'Patient Address - Homeless Indicator', 'length': 1, 'justification': 'left'}])
         self.fields_info = pd.DataFrame.from_dict(self.final_fields)
         self.add_demographics()
         self.add_encounters(encounter_type)
@@ -40,7 +41,6 @@ class FormatOutput:
         #self.fixed_width_output()
         timestamp = time.time()
         date_time = dt.datetime.fromtimestamp(timestamp)
-        #self.fixed_width_output()
         self.output_df[self.fields_info['name'].tolist()].to_csv(
             f'{output_loc}/formatted_data_{date_time.strftime("%d-%m-%Y_%H%M%S")}.csv', index=False)
 
@@ -134,18 +134,26 @@ class FormatOutput:
         diagnosis = pd.read_csv(f'{self.output_loc}/cpcds/CPCDS_Claims.csv', dtype=str, header=0)
 
         diagnosis['encounter_id'] = diagnosis.iloc[:, 8]
+
         diagnosis['Diagnosis Codes'] = mappings.snomedicdbasicmap(diagnosis.iloc[:, 88])
+        diagnosis['Diagnosis Codes'].replace("", np.nan, inplace = True)
+        diagnosis.dropna(subset=['Diagnosis Codes'], inplace=True)
+
+        diagnosis['Present on Admission'] = diagnosis.iloc[:, 90]
 
         print('SUB-CHECK - Diagnosis Shape pre group: ', diagnosis.shape)
 
         diagnosis = diagnosis.groupby('encounter_id').agg(lambda x: tuple(x)).reset_index()
         print('SUB-CHECK - Diagnosis Shape post group: ', diagnosis.shape)
 
-        self.output_df = self.output_df.merge(diagnosis[['Diagnosis Codes']],
+        self.output_df = self.output_df.merge(diagnosis[['Diagnosis Codes', 'Present on Admission']],
                                               how = 'left', left_on = 'encounter_id', right_on= diagnosis.iloc[:, 0])
 
         print('Diagnosis info added.  Shape: ', self.output_df.shape)
 
+        self.output_df = self.output_df.apply(modify_row, axis=1, args=(['Diagnosis Codes', 'Present on Admission'], ['Diagnosis', 'Present on Admission']))
+
+        del diagnosis
 
 
 
@@ -200,20 +208,26 @@ class FormatOutput:
 
     def get_procedure_list(self):
         procedure_list = []
-        for i in range(2, 25):
-            code = {'name': f'Procedure Code {i}', 'length': 7, 'justification': 'left'}
-            procedure_list.append(code)
-            date = {'name': f'Procedure Date {i}', 'length': 8, 'justification': 'left'}
-            procedure_list.append(date)
+        for i in range(1, 25):
+            if i == 1:
+                code = {'name': f'Principal Procedure Code', 'length': 7, 'justification': 'left'}
+                procedure_list.append(code)
+                date = {'name': f'Principal Procedure Date', 'length': 8, 'justification': 'left'}
+                procedure_list.append(date)
+            else:
+                code = {'name': f'Procedure Code {i}', 'length': 7, 'justification': 'left'}
+                procedure_list.append(code)
+                date = {'name': f'Procedure Date {i}', 'length': 8, 'justification': 'left'}
+                procedure_list.append(date)
 
         return procedure_list
 
     def get_diagnosis_list(self):
         diagnosis_list = []
         for i in range(2, 25):
-            diagnosis = {'name': f'Diagnosis Code {i}', 'length': 7, 'justification': 'left'}
+            diagnosis = {'name': f'Diagnosis {i}', 'length': 7, 'justification': 'left'}
             diagnosis_list.append(diagnosis)
-            present_on_admission = {'name': f'Present On Admission {i}', 'length': 1, 'justification': 'left'}
+            present_on_admission = {'name': f'Present on Admission {i}', 'length': 1, 'justification': 'left'}
             diagnosis_list.append(present_on_admission)
 
         return diagnosis_list
@@ -227,8 +241,12 @@ def modify_row(row, df_fields, new_fields):
         if isinstance(first, tuple) and isinstance(second, tuple):
             for code, date, i in zip(first, second, range(1, 25)):
                 if i == 1:
-                    row[f'Principal {new_fields[0]}'] = code
-                    row[f'Principal {new_fields[1]}'] = date
+                    if new_fields[0] == 'Diagnosis':
+                        row[f'Principal {new_fields[0]}'] = code
+                        row[f'{new_fields[1]} for Principal {new_fields[0]}'] = date
+                    else:
+                        row[f'Principal {new_fields[0]}'] = code
+                        row[f'Principal {new_fields[1]}'] = date
                 else:
                     row[f'{new_fields[0]} {i}'] = code
                     row[f'{new_fields[1]} {i}'] = date
