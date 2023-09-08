@@ -38,7 +38,7 @@ class FormatOutput:
         self.add_other_diagnosis()
         self.hard_coding()
         self.fill_missing()
-        #self.fixed_width_output()
+        self.fixed_width_output()
         timestamp = time.time()
         date_time = dt.datetime.fromtimestamp(timestamp)
         self.output_df[self.fields_info['name'].tolist()].to_csv(
@@ -196,11 +196,13 @@ class FormatOutput:
 
         columns = self.fields_info['name'].tolist()
 
-        formatters = {key: value for key, value in zip(columns, formats) if key != 'Procedure Codes' and key != 'Procedure Dates'}
+        tuple_columns = ['Procedure Codes', 'Procedure Dates', 'Diagnosis Codes', 'Present on Admission']
+
+        formatters = {key: value for key, value in zip(columns, formats) if key not in tuple_columns}
 
         print(formatters)
 
-        fixed_width_str = df.to_string(formatters = formatters, col_space = 2, header = False, index = False)
+        fixed_width_str = df.to_string(formatters = formatters, col_space = 5, header = False, index = False)
 
         print('Fixed Width Converted. Shape: ', self.output_df.shape)
 
