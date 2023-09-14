@@ -181,7 +181,11 @@ class FormatOutput:
             self.output_df[col] = None
 
     def fixed_width_output(self):
-        df = self.output_df.copy(deep = True)
+        df = self.output_df.copy()
+
+        columns = self.fields_info['name'].tolist()
+
+        df = df[columns]
 
         formats = []
         for width, justification in zip(self.fields_info.length, self.fields_info.justification):
@@ -194,19 +198,23 @@ class FormatOutput:
                 fmt = fmt.format
             formats.append(fmt)
 
-        columns = self.fields_info['name'].tolist()
-
         tuple_columns = ['Procedure Codes', 'Procedure Dates', 'Diagnosis Codes', 'Present on Admission']
+        df = df.drop(columns = tuple_columns)
 
         formatters = {key: value for key, value in zip(columns, formats) if key not in tuple_columns}
 
-        print(formatters)
+        df.fillna('', inplace = True)
 
         fixed_width_str = df.to_string(formatters = formatters, col_space = 5, header = False, index = False)
 
-        print('Fixed Width Converted. Shape: ', self.output_df.shape)
+        print('Fixed Width Converted. Shape: ', df.shape)
 
         print(fixed_width_str)
+
+        filename = input("Enter File Name: ")
+
+        with open(filename, "w") as text_file:
+            text_file.write(fixed_width_str)
 
     def get_procedure_list(self):
         procedure_list = []
