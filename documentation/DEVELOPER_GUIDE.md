@@ -14,6 +14,10 @@
      * [Coding and running Environment](Coding-and-running-Environment)
 <!--te-->
 
+## Coding standards
+- Comment all functions
+- Pep standards and lint choice (TBD - devs help me here)
+- Most code changes should be done branches with pull requests managed on git hub
 ## Code workflow diagram
 - (As of date: Oct 2023)
 ![image](https://github.com/rileeki-org/synthetic-database-project/assets/106410329/6d9bca67-05c3-4e28-89b4-07f4914701c7)
