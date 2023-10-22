@@ -1,22 +1,10 @@
-# Developer Guide (WIP)
-## Coding and running Environment
-Using a local IDE of your choice, add the GIT repos we will need and set up the virtual environment to access helper functions 
- 
-- (Create a GITHUB account if you have not already - github.com)
-- Git clone ssh://git@github.com/rileeki-org/synthetic-database-project to your IDE
-- Download and execute synthea: [synthea setup page](https://github.com/synthetichealth/synthea/wiki/Basic-Setup-and-Running)
-- Create a virtual environment to access shared helper functions
-  - Background reading: [VIRTUAL ENVIRONMENTS 1](https://www.freecodecamp.org/news/how-to-setup-virtual-environments-in-python/), [VIRTUAL ENVIRONMENTS 2](https://openclassrooms.com/en/courses/6900846-set-up-a-python-environment/6990546-manage-virtual-environments-using-requirements-files)
-  - Generate SSH keys on your machine and then add your key to your github account
-    - [Generating a SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
-    - [Adding your SSH key to github](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
-  - Run: $ sudo apt install python3-pip     (Installs the Python3 version of "pip" on your system, allowing you to easily install and manage Python packages)
-  - Run: $ pip install -r [YOUR REPO PATH]/synthetic-database-project/requirements.txt
-- Prepare to run synthea
-  - if you haven't already, install synthea-with-dependencies.jar: [Download Link](https://github.com/synthetichealth/synthea/releases/download/master-branch-latest/synthea-with-dependencies.jar)
-  - move synthea-with-dependencies.jar into your project directory (where run_synthea.py lives)
-  - in run_synthea.py set jar_file = [YOUR FULL PROJECT DIRECTORY PATH]  --At least until we find out how to use a relative path for this
-  - Run: $ python run_synthea.py --If the command 'python' is not found, use 'python3'
+# Developer Guide
+## Table of Contents
+<!--ts-->
+ * [Working with synthea](#Working-with-synthea)
+  * [Outputs](#Outputs)
+   * [Log files](#Log-files)
+<!--te-->
 
 ## Working with synthea
 ### Outputs
@@ -67,12 +55,29 @@ A lightweight Linux VM from somewhere like VMware player can be a quick and easy
     - I did the update manager with whatever it suggested.  Select the banner that suggest you “change mirror to a local one” to make this much much faster.  In the popup just click on the two sources and give it a sec to test speeds and select the top speed option for each.
     - Install GIT from the software manager, we will need it later
     - Restart now or after you install your preferred IDE
-    - 
 
 ### IDE Example setup - IntelliJ
 - Within your VM install JetBrains Toolbox from the jetbrains website https://www.jetbrains.com/toolbox-app/
 - Install IntelliJ IDEA Community Edition from the toolbox
     - Note as of Summer '23 - version 2022.1.4 is the latest that supports the python plugins for some reason so install this version.
+
+### Coding and running Environment
+Using a local IDE of your choice, add the GIT repos we will need and set up the virtual environment to access helper functions 
  
+- (Create a GITHUB account if you have not already - github.com)
+- Git clone ssh://git@github.com/rileeki-org/synthetic-database-project to your IDE
+- Download and execute synthea: [synthea setup page](https://github.com/synthetichealth/synthea/wiki/Basic-Setup-and-Running)
+- Create a virtual environment to access shared helper functions
+  - Background reading: [VIRTUAL ENVIRONMENTS 1](https://www.freecodecamp.org/news/how-to-setup-virtual-environments-in-python/), [VIRTUAL ENVIRONMENTS 2](https://openclassrooms.com/en/courses/6900846-set-up-a-python-environment/6990546-manage-virtual-environments-using-requirements-files)
+  - Generate SSH keys on your machine and then add your key to your github account
+    - [Generating a SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
+    - [Adding your SSH key to github](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
+  - Run: $ sudo apt install python3-pip     (Installs the Python3 version of "pip" on your system, allowing you to easily install and manage Python packages)
+  - Run: $ pip install -r [YOUR REPO PATH]/synthetic-database-project/requirements.txt
+- Prepare to run synthea
+  - if you haven't already, install synthea-with-dependencies.jar: [Download Link](https://github.com/synthetichealth/synthea/releases/download/master-branch-latest/synthea-with-dependencies.jar)
+  - move synthea-with-dependencies.jar into your project directory (where run_synthea.py lives)
+  - Run: $ python run_synthea.py --If the command 'python' is not found, use 'python3'
+
 
     
