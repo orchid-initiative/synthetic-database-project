@@ -1,11 +1,22 @@
 # Developer Guide
 ## Table of Contents
 <!--ts-->
+ * [Code workflow diagram](#Code-workflow-diagram)
  * [Working with synthea](#Working-with-synthea)
-  * [Outputs](#Outputs)
-   * [Log files](#Log-files)
+   * [Outputs](#Outputs)
+     * [Log files](#Log-files)
+     * [Output files](#Output-files)
+   * [Configurations](#Configurations)
+ * [Appendix Tools](#Appendix-Tools)
+   * [Installing a Virtual Machine](#Installing-a-Virtual-Machine)
+     * [Downloading and setting up the Linux VM](#Downloading-and-setting-up-the-Linux-VM)
+     * [IDE Example setup - IntelliJ](IDE-Example-setup---IntelliJ)
+     * [Coding and running Environment](Coding-and-running-Environment)
 <!--te-->
 
+## Code workflow diagram
+- (As of date: Oct 2023)
+![image](https://github.com/rileeki-org/synthetic-database-project/assets/106410329/6d9bca67-05c3-4e28-89b4-07f4914701c7)
 ## Working with synthea
 ### Outputs
 #### Log files
@@ -14,7 +25,7 @@
 - You will find run_synthea.py_[date].log in the project directory
   - This is our helper function logging.  It provides some wrapper logging for the java function, much of the same java logging as above, and some timing statistics
   - This also provides some debugging opportunity for the formatting operations of our summary output.
-#### /output/ files
+#### Output files
   - Running synthea will create the output folder in your project directory.  This folder is where all patient records will be exported. Files will be exported to subfolders based on their type
   - Specifically, you have the option to configure synthea (see "**Configurations**" below)
   - Some description of the possible CSV summary outputs are documented here [LINK](https://github.com/synthetichealth/synthea/wiki/CSV-File-Data-Dictionary)
@@ -29,7 +40,8 @@
 Even if you use a PC in the general course of business, you may still find it more convenient to code in a unix OS.
 A lightweight Linux VM from somewhere like VMware player can be a quick and easy solution.
 
-#### Downloading and setting up the Linux VM (time required: ~30-60 min):
+#### Downloading and setting up the Linux VM:
+- **(time required: ~30-60 min)**
 - Download latest VMware player (free) [LINK](https://www.vmware.com/go/downloadplayer)
 - Download a Linux installation to use on the VM (free)
   - Try Mint XFCE first - its lightweight and might be all we need [LINK](https://www.linuxmint.com/edition.php?id=294)
