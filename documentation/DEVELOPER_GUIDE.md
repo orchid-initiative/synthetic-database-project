@@ -1,26 +1,33 @@
 # Developer Guide
 ## Table of Contents
 <!--ts-->
- * [Code workflow diagram](#Code-workflow-diagram)
- * [Working with synthea](#Working-with-synthea)
+* **Our Repo**
+   * [Coding standards](#Coding-standards)
+   * [Code workflow diagram](#Code-workflow-diagram)
+   * [Main project board](#Main-project-board)
+ * **Working with synthea**
    * [Outputs](#Outputs)
      * [Log files](#Log-files)
      * [Output files](#Output-files)
    * [Configurations](#Configurations)
- * [Appendix Tools](#Appendix-Tools)
+ * **Appendix Tools**
    * [Installing a Virtual Machine](#Installing-a-Virtual-Machine)
      * [Downloading and setting up the Linux VM](#Downloading-and-setting-up-the-Linux-VM)
      * [IDE Example setup - IntelliJ](IDE-Example-setup---IntelliJ)
      * [Coding and running Environment](Coding-and-running-Environment)
 <!--te-->
 
-## Coding standards
+## Our Repo
+### Coding standards
 - Comment all functions
 - Pep standards and lint choice (TBD - devs help me here)
 - Most code changes should be done branches with pull requests managed on git hub
-## Code workflow diagram
+### Code workflow diagram
 - (As of date: Oct 2023)
 ![image](https://github.com/rileeki-org/synthetic-database-project/assets/106410329/6d9bca67-05c3-4e28-89b4-07f4914701c7)
+### Main project board
+- We have summarized the tasks in a Kanban Board found here:
+[Project Board](https://github.com/orgs/rileeki-org/projects/7)
 ## Working with synthea
 ### Outputs
 #### Log files
