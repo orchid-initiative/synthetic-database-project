@@ -1,5 +1,6 @@
 import unittest
-from synth_data_module import FormatOutput
+from synth_data_module import FormatOutput, get_procedure_list, get_diagnosis_list
+
 
 class FormatTest(unittest.TestCase):
 
@@ -9,18 +10,20 @@ class FormatTest(unittest.TestCase):
 
     def test_add_procedure(self):
         pass
-        #For this test try testing without modifying the original function in format
+        # For this test try testing without modifying the original function in format
 
     def test_add_diagnosis(self):
         pass
-        #For this test, first try separating the function into separate functions based on functionality. Ex: pulling data from csv vs. merging data
-    def test_modify_row(self):
-        testdict = [{'a': 1, 'b': 2, 'c': 3},
-                  {'a': 100, 'b': 200, 'c': 300},
-                  {'a': 1000, 'b': 2000, 'c': 3000}]
+        # For this test, first try separating the function into separate functions based on functionality.
+        # Ex: pulling data from csv vs. merging data
+
+    # def test_modify_row(self):
+    #     testdict = [{'a': 1, 'b': 2, 'c': 3},
+    #               {'a': 100, 'b': 200, 'c': 300},
+    #               {'a': 1000, 'b': 2000, 'c': 3000}]
 
     def test_get_procedure_list(self):
-        procedure_list = self.fmt.get_procedure_list()
+        procedure_list = get_procedure_list()
         self.assertEqual(len(procedure_list), 48)
 
         for i in range(48):
@@ -32,7 +35,7 @@ class FormatTest(unittest.TestCase):
                 self.assertTrue(procedure_list[i]['name'].startswith('Procedure Date'))
 
     def test_get_diagnosis_list(self):
-        diagnosis_list = self.fmt.get_diagnosis_list()
+        diagnosis_list = get_diagnosis_list()
         self.assertEqual(len(diagnosis_list), 46)
 
         for i in range(46):

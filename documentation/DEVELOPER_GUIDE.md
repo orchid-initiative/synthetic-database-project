@@ -1,23 +1,42 @@
-# Developer Guide (WIP)
-## Coding and running Environment
-Using a local IDE of your choice, add the GIT repos we will need and set up the virtual environment to access helper functions 
- 
-- (Create a GITHUB account if you have not already - github.com)
-- Git clone ssh://git@github.com/rileeki-org/synthetic-database-project to your IDE
-- Download and execute synthea: [synthea setup page](https://github.com/synthetichealth/synthea/wiki/Basic-Setup-and-Running)
-- Create a virtual environment to access shared helper functions
-  - Background reading: [VIRTUAL ENVIRONMENTS 1](https://www.freecodecamp.org/news/how-to-setup-virtual-environments-in-python/), [VIRTUAL ENVIRONMENTS 2](https://openclassrooms.com/en/courses/6900846-set-up-a-python-environment/6990546-manage-virtual-environments-using-requirements-files)
-  - Generate SSH keys on your machine and then add your key to your github account
-    - [Generating a SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
-    - [Adding your SSH key to github](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
-  - Run: $ sudo apt install python3-pip     (Installs the Python3 version of "pip" on your system, allowing you to easily install and manage Python packages)
-  - Run: $ pip install -r [YOUR REPO PATH]/synthetic-database-project/requirements.txt
-- Prepare to run synthea
-  - if you haven't already, install synthea-with-dependencies.jar: [Download Link](https://github.com/synthetichealth/synthea/releases/download/master-branch-latest/synthea-with-dependencies.jar)
-  - move synthea-with-dependencies.jar into your project directory (where run_synthea.py lives)
-  - in run_synthea.py set jar_file = [YOUR FULL PROJECT DIRECTORY PATH]  --At least until we find out how to use a relative path for this
-  - Run: $ python run_synthea.py --If the command 'python' is not found, use 'python3'
+# Developer Guide
+## Table of Contents
+<!--ts-->
+* **Our Repo**
+   * [Coding standards](#Coding-standards)
+   * [Code workflow diagram](#Code-workflow-diagram)
+   * [Main project board](#Main-project-board)
+ * **Working with synthea**
+   * [Outputs](#Outputs)
+     * [Log files](#Log-files)
+     * [Output files](#Output-files)
+   * [Configurations](#Configurations)
+ * **Appendix Tools**
+   * [Installing a Virtual Machine](#Installing-a-Virtual-Machine)
+     * [Downloading and setting up the Linux VM](#Downloading-and-setting-up-the-Linux-VM)
+     * [IDE Example setup - IntelliJ](#IDE-Example-setup-in-IntelliJ)
+     * [Coding and running Environment](#Coding-and-running-Environment)
+<!--te-->
 
+## Our Repo
+### Coding standards
+- Comment all functions
+- Pep standards and lint choice (TBD - devs help me here)
+- Most code changes should be done branches with pull requests managed on git hub
+  - creating a new local branch named my-new-branch:
+    - _git checkout -b my-new-branch_
+  - Push your branch to the remote repository (for the first time)
+    - _git push --set-upstream origin my-new-branch_
+  - Push updates on your branch to the remote repository
+    - _git push origin my-new-branch_
+  - When ready, create a pull request
+    - [GIT HUB LINK](https://github.com/rileeki-org/synthetic-database-project/pulls
+ 
+### Code workflow diagram
+- (As of date: Oct 2023)
+![image](https://github.com/rileeki-org/synthetic-database-project/assets/106410329/6d9bca67-05c3-4e28-89b4-07f4914701c7)
+### Main project board
+- We have summarized the tasks in a Kanban Board found here:
+[Project Board](https://github.com/orgs/rileeki-org/projects/7)
 ## Working with synthea
 ### Outputs
 #### Log files
@@ -26,7 +45,7 @@ Using a local IDE of your choice, add the GIT repos we will need and set up the 
 - You will find run_synthea.py_[date].log in the project directory
   - This is our helper function logging.  It provides some wrapper logging for the java function, much of the same java logging as above, and some timing statistics
   - This also provides some debugging opportunity for the formatting operations of our summary output.
-#### /output/ files
+#### Output files
   - Running synthea will create the output folder in your project directory.  This folder is where all patient records will be exported. Files will be exported to subfolders based on their type
   - Specifically, you have the option to configure synthea (see "**Configurations**" below)
   - Some description of the possible CSV summary outputs are documented here [LINK](https://github.com/synthetichealth/synthea/wiki/CSV-File-Data-Dictionary)
@@ -41,7 +60,8 @@ Using a local IDE of your choice, add the GIT repos we will need and set up the 
 Even if you use a PC in the general course of business, you may still find it more convenient to code in a unix OS.
 A lightweight Linux VM from somewhere like VMware player can be a quick and easy solution.
 
-#### Downloading and setting up the Linux VM (time required: ~30-60 min):
+#### Downloading and setting up the Linux VM
+- **(time required: ~30-60 min)**
 - Download latest VMware player (free) [LINK](https://www.vmware.com/go/downloadplayer)
 - Download a Linux installation to use on the VM (free)
   - Try Mint XFCE first - its lightweight and might be all we need [LINK](https://www.linuxmint.com/edition.php?id=294)
@@ -67,12 +87,29 @@ A lightweight Linux VM from somewhere like VMware player can be a quick and easy
     - I did the update manager with whatever it suggested.  Select the banner that suggest you “change mirror to a local one” to make this much much faster.  In the popup just click on the two sources and give it a sec to test speeds and select the top speed option for each.
     - Install GIT from the software manager, we will need it later
     - Restart now or after you install your preferred IDE
-    - 
 
-### IDE Example setup - IntelliJ
+### IDE Example setup in IntelliJ
 - Within your VM install JetBrains Toolbox from the jetbrains website https://www.jetbrains.com/toolbox-app/
 - Install IntelliJ IDEA Community Edition from the toolbox
     - Note as of Summer '23 - version 2022.1.4 is the latest that supports the python plugins for some reason so install this version.
+
+### Coding and running Environment
+Using a local IDE of your choice, add the GIT repos we will need and set up the virtual environment to access helper functions 
  
+- (Create a GITHUB account if you have not already - github.com)
+- Git clone ssh://git@github.com/rileeki-org/synthetic-database-project to your IDE
+- Download and execute synthea: [synthea setup page](https://github.com/synthetichealth/synthea/wiki/Basic-Setup-and-Running)
+- Create a virtual environment to access shared helper functions
+  - Background reading: [VIRTUAL ENVIRONMENTS 1](https://www.freecodecamp.org/news/how-to-setup-virtual-environments-in-python/), [VIRTUAL ENVIRONMENTS 2](https://openclassrooms.com/en/courses/6900846-set-up-a-python-environment/6990546-manage-virtual-environments-using-requirements-files)
+  - Generate SSH keys on your machine and then add your key to your github account
+    - [Generating a SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
+    - [Adding your SSH key to github](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
+  - Run: $ sudo apt install python3-pip     (Installs the Python3 version of "pip" on your system, allowing you to easily install and manage Python packages)
+  - Run: $ pip install -r [YOUR REPO PATH]/synthetic-database-project/requirements.txt
+- Prepare to run synthea
+  - if you haven't already, install synthea-with-dependencies.jar: [Download Link](https://github.com/synthetichealth/synthea/releases/download/master-branch-latest/synthea-with-dependencies.jar)
+  - move synthea-with-dependencies.jar into your project directory (where run_synthea.py lives)
+  - Run: $ python run_synthea.py --If the command 'python' is not found, use 'python3'
+
 
     
