@@ -30,7 +30,6 @@
     - _git push origin my-new-branch_
   - When ready, create a pull request
     - [GIT HUB LINK](https://github.com/rileeki-org/synthetic-database-project/pulls
- 
 ### Code workflow diagram
 - (As of date: Oct 2023)
 ![image](https://github.com/rileeki-org/synthetic-database-project/assets/106410329/6d9bca67-05c3-4e28-89b4-07f4914701c7)

@@ -8,12 +8,17 @@ Our project leverages [Synthea<sup>TM</sup>](https://synthetichealth.github.io/s
 **Version 1**
 - Project Timeline: Dec 2022 - Feb 2023
 - Team Members: Riley Kwong (@rileeki), Ann Epstein (@aepstein27), Lisa Snortheim (@lisasnortheim), Stefanie Eddy
-- v1 of the database is in progress.  This is the first iteration and is really just a proof of concept.  The overall format is there, but many of the fields are left blank.
+- v1 of the database is the first iteration and is really just a proof of concept.  The overall format is there, but many of the fields are left blank.
 
 **Version 2**
-- Project Timeline: TBD
+- Project Timeline: Spring 2023 - Fall 2023
+- Team Members: Riley Kwong (@rileeki), Travis Haussler (@travishaussler), Ian Tang (@iqtang)
+- v2 of the database fleshed out more of the fields that were still empty in v1, explored basic SNOMED - IDC mappings, and included fixed width output translations.
+
+**Version 3**
+- Project Timeline: Fall 2023 - TBD
 - Team Members: TBD
-- v2 of the database will flesh out more of the fields that are still empty in v1. The specific updates in v2 are TBD.
+- v3 finallizes used fields and documents unpopulatable fields and their failure reasons.  The goal of this version will be able to produce data to support actual field experiments and analysis.
 
 ### Sample Data
 Explore our synthetic hospital discharge data with our downloadable dataset. This dataset contains synthetic patient records in the format that California hospitals use to submit abstracted patient records to the California Department of Health Care Access and Information ([HCAI](https://hcai.ca.gov/data-and-reports/submit-data/patient-data/inpatient-reporting/
@@ -28,7 +33,7 @@ The Summary Statistic Workbook provides an overview of the synthetic hospital di
 ### General Information
 - Want to learn more about the project's scope and objectives? Check out the [project charter](documentation/PROJECT_CHARTER.md).
 - Want to run the program to create your own database? The [production guide](documentation/PRODUCTION_GUIDE.md) is coming soon...
-- Ready to contribute? The [developer guide](documentation/DEVELOPER_GUIDE.md) is coming soon, too!
+- Ready to contribute? Check out the [developer guide](documentation/DEVELOPER_GUIDE.md) to see our coding standards and get started contributing. 
 - Have questions or feedback? Join the discussion on our [GitHub Discussions](https://github.com/rileeki-org/synthetic-database-project/discussions) page.  Or, you can use the [GitHub issues page](https://github.com/rileeki-org/synthetic-database-project/issues) to report bugs and request new features.
 - Looking for internal project management documents? Those are stored in [this Google Drive folder](https://drive.google.com/drive/folders/1W4jLmDP6Cl9c2Ocqv08kpu6Y8ToMK7Hy).
 
@@ -39,13 +44,3 @@ The Summary Statistic Workbook provides an overview of the synthetic hospital di
 - Slack channel (permissions required): [synthetic_discharges](https://rileeki.slack.com/archives/C04DCD1PYJE)
 - AWS (permissions required): https://rileeki.signin.aws.amazon.com/console
 - Note: .jar file is required in folder, but too large to add to our free GitHub account: https://github.com/synthetichealth/synthea/wiki/Basic-Setup-and-Running
-
-### Git branching
-Git branching is super awesome! 
-
-We create a branch with the following command:
-
-```
-git checkout -b my-new-branch
-```
-
