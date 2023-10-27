@@ -20,7 +20,7 @@ def parse_arguments():
 
 def main():
     start = time.time()
-    log.setSysOut(f'{__file__}_{dt.date.today()}.log')
+    log.setSysOut(f'logs/{__file__}_{dt.date.today()}.log')
     output_loc = 'output/'
 
     args = parse_arguments()
@@ -44,8 +44,8 @@ def main():
         log.printSectionSubHeader('Creating Female Records')
         sub_start = time.time()
         synthea = Synthea(jar_file, 'synthea_settings')  # initialize the module
-        synthea.specify_popSize(40)
-        synthea.specify_gender('F')
+        synthea.specify_popsize(size=40)
+        synthea.specify_gender(gender='F')
         # synthea.specify_city('California', 'Pasadena')
         synthea.run_synthea()
         log.printElapsedTime(sub_start, "Females created in: ")
@@ -54,8 +54,8 @@ def main():
         '''log.printSectionSubHeader('Creating Male Records')
         sub_start = time.time()
         synthea = Synthea(jar_file, 'synthea_settings') # initialize the module
-        synthea.specify_popSize(1220)
-        synthea.specify_gender('M')
+        synthea.specify_popsize(size=1220)
+        synthea.specify_gender(gender='M')
         synthea.run_synthea()
         log.printElapsedTime(sub_start, "Males created in: ")'''
 

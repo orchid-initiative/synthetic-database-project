@@ -13,8 +13,8 @@
  * **Appendix Tools**
    * [Installing a Virtual Machine](#Installing-a-Virtual-Machine)
      * [Downloading and setting up the Linux VM](#Downloading-and-setting-up-the-Linux-VM)
-     * [IDE Example setup - IntelliJ](IDE-Example-setup---IntelliJ)
-     * [Coding and running Environment](Coding-and-running-Environment)
+     * [IDE Example setup - IntelliJ](#IDE-Example-setup-in-IntelliJ)
+     * [Coding and running Environment](#Coding-and-running-Environment)
 <!--te-->
 
 ## Our Repo
@@ -22,6 +22,14 @@
 - Comment all functions
 - Pep standards and lint choice (TBD - devs help me here)
 - Most code changes should be done branches with pull requests managed on git hub
+  - creating a new local branch named my-new-branch:
+    - _git checkout -b my-new-branch_
+  - Push your branch to the remote repository (for the first time)
+    - _git push --set-upstream origin my-new-branch_
+  - Push updates on your branch to the remote repository
+    - _git push origin my-new-branch_
+  - When ready, create a pull request
+    - [GIT HUB LINK](https://github.com/rileeki-org/synthetic-database-project/pulls
 ### Code workflow diagram
 - (As of date: Oct 2023)
 ![image](https://github.com/rileeki-org/synthetic-database-project/assets/106410329/6d9bca67-05c3-4e28-89b4-07f4914701c7)
@@ -51,7 +59,7 @@
 Even if you use a PC in the general course of business, you may still find it more convenient to code in a unix OS.
 A lightweight Linux VM from somewhere like VMware player can be a quick and easy solution.
 
-#### Downloading and setting up the Linux VM:
+#### Downloading and setting up the Linux VM
 - **(time required: ~30-60 min)**
 - Download latest VMware player (free) [LINK](https://www.vmware.com/go/downloadplayer)
 - Download a Linux installation to use on the VM (free)
@@ -79,7 +87,7 @@ A lightweight Linux VM from somewhere like VMware player can be a quick and easy
     - Install GIT from the software manager, we will need it later
     - Restart now or after you install your preferred IDE
 
-### IDE Example setup - IntelliJ
+### IDE Example setup in IntelliJ
 - Within your VM install JetBrains Toolbox from the jetbrains website https://www.jetbrains.com/toolbox-app/
 - Install IntelliJ IDEA Community Edition from the toolbox
     - Note as of Summer '23 - version 2022.1.4 is the latest that supports the python plugins for some reason so install this version.

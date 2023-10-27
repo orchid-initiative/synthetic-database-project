@@ -6,6 +6,7 @@ with open('synth_data_module/snomedbasicmappings.csv') as f:
     reader = csv.reader(f, skipinitialspace=True)
     snomeddict = dict(reader)
 
+
 def ethnicity(col):
     dic = {'hispanic': 'E1',
            'nonhispanic': 'E2'}
