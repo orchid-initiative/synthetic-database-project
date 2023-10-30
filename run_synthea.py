@@ -13,17 +13,20 @@ def parse_arguments():
                         choices=['inpatient', 'outpatient', 'ambulatory', 'wellness', 'virtual', 'urgentcare',
                                  'emergency'], default='inpatient')
     # Add an argument to just run formatting code (i.e. bypass running synthea again and do not delete output/ files)
-    parser.add_argument('-F', '--FormatOnly', help='Only Run Formatting code', action='store_true', default=False)
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-F', '--FormatOnly', help='Only Run Formatting code', action='store_true', default=False)
+    group.add_argument('-D', '--SyntheaGenOnly', help='Only Run Synthea Data Generation, not Formatting',
+                       action='store_true', default=False)
     args = parser.parse_args()
     return args
 
 
 def main():
     start = time.time()
+    args = parse_arguments()
+
     log.setSysOut(f'logs/{__file__}_{dt.date.today()}.log')
     output_loc = 'output/'
-
-    args = parse_arguments()
     encounter_type = args.Type
 
     if not args.FormatOnly:
@@ -62,9 +65,9 @@ def main():
     # Format data to our desired layout
     log.printSectionHeader('Formatting Data')
     form_start = time.time()
-    FormatOutput('010735', output_loc, encounter_type)
-    log.printElapsedTime(form_start, "Formatted output created in: ")
-
+    if not args.SyntheaGenOnly:
+        FormatOutput('010735', output_loc, encounter_type)
+        log.printElapsedTime(form_start, "Formatted output created in: ")
     log.printSectionSubHeader('Total Elapsed Time')
     log.printElapsedTime(start)
 
