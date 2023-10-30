@@ -29,13 +29,13 @@
   - Push updates on your branch to the remote repository
     - _git push origin my-new-branch_
   - When ready, create a pull request
-    - [GIT HUB LINK](https://github.com/rileeki-org/synthetic-database-project/pulls
+    - [GIT HUB LINK](https://github.com/orchid-initiative/synthetic-database-project/pulls
 ### Code workflow diagram
 - (As of date: Oct 2023)
-![image](https://github.com/rileeki-org/synthetic-database-project/assets/106410329/6d9bca67-05c3-4e28-89b4-07f4914701c7)
+![image](https://github.com/orchid-initiative/synthetic-database-project/assets/106410329/6d9bca67-05c3-4e28-89b4-07f4914701c7)
 ### Main project board
 - We have summarized the tasks in a Kanban Board found here:
-[Project Board](https://github.com/orgs/rileeki-org/projects/7)
+[Project Board](https://github.com/orgs/orchid-initiative/projects/7)
 ## Working with synthea
 ### Outputs
 #### Log files
@@ -96,7 +96,7 @@ A lightweight Linux VM from somewhere like VMware player can be a quick and easy
 Using a local IDE of your choice, add the GIT repos we will need and set up the virtual environment to access helper functions 
  
 - (Create a GITHUB account if you have not already - github.com)
-- Git clone ssh://git@github.com/rileeki-org/synthetic-database-project to your IDE
+- Git clone ssh://git@github.com/orchid-initiative/synthetic-database-project to your IDE
 - Download and execute synthea: [synthea setup page](https://github.com/synthetichealth/synthea/wiki/Basic-Setup-and-Running)
 - Create a virtual environment to access shared helper functions
   - Background reading: [VIRTUAL ENVIRONMENTS 1](https://www.freecodecamp.org/news/how-to-setup-virtual-environments-in-python/), [VIRTUAL ENVIRONMENTS 2](https://openclassrooms.com/en/courses/6900846-set-up-a-python-environment/6990546-manage-virtual-environments-using-requirements-files)
