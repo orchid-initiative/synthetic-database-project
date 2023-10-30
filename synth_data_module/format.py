@@ -130,8 +130,9 @@ class FormatOutput:
 
     def add_procedures(self):
         procedures = pd.read_csv(f'{self.output_loc}/csv/procedures.csv', dtype=str, parse_dates=[0, 1], header=0)
-        # TODO procedures are not included in the current basic snomed map, find them.  Pass-through for now
-        # procedures['Procedure Codes'] = mappings.snomedicdbasicmap(procedures.iloc[:, 4])
+        # TODO procedures are not included in the current basic snomed map, find them.  Pass-through for now.
+        #  Note that these are also longer and get truncated by field length later!
+        #  procedures['Procedure Codes'] = mappings.snomedicdbasicmap(procedures.iloc[:, 4])
         procedures['encounter_id'] = procedures.iloc[:, 3]
         procedures['Procedure Codes'] = procedures.iloc[:, 4]
         try:
