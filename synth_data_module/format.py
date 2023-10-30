@@ -15,55 +15,51 @@ class FormatOutput:
         self.encounter_type = encounter_type
         procedure_list = get_procedure_list()
         diagnosis_list = get_diagnosis_list()
-        self.final_fields = ([{'name': 'Type of Care', 'length': 1, 'justification': 'left'},
-                              {'name': 'Facility Identification Number', 'length': 6, 'justification': 'left'},
-                              {'name': 'Date of Birth', 'length': 8, 'justification': 'left'},
-                              {'name': 'Sex', 'length': 1, 'justification': 'left'},
-                              {'name': 'Ethnicity', 'length': 2, 'justification': 'left'},
-                              {'name': 'Race', 'length': 10, 'justification': 'left'},
-                              {'name': 'Not in Use', 'length': 5, 'justification': 'left'},
-                              {'name': 'Admission Date', 'length': 12, 'justification': 'left'},
-                              {'name': 'Point of Origin', 'length': 1, 'justification': 'left'},
-                              {'name': 'Route of Admission', 'length': 1, 'justification': 'left'},
-                              {'name': 'Type of Admission', 'length': 1, 'justification': 'left'},
-                              {'name': 'Discharge Date', 'length': 12, 'justification': 'left'},
-                              {'name': 'Principal Diagnosis', 'length': 7, 'justification': 'left'},
-                              {'name': 'Present on Admission for Principal Diagnosis', 'length': 1,
-                               'justification': 'left'}] + diagnosis_list + [
-                                 {'name': 'Diagnosis Codes', 'length': 250, 'justification': 'left'},
-                                 {'name': 'Present on Admission', 'length': 100, 'justification': 'left'}]
-                             + procedure_list + [{'name': 'Procedure Codes', 'length': 375, 'justification': 'left'},
-                                                 {'name': 'Procedure Dates', 'length': 375, 'justification': 'left'},
-                                                 {'name': 'Other Procedure Codes and Other Procedure Dates',
-                                                  'length': 0, 'justification': 'left'},
-                                                 {'name': 'External Causes of Morbidity and Present on Admission',
-                                                  'length': 96, 'justification': 'left'},
-                                                 {'name': 'Patient SSN', 'length': 9, 'justification': 'left'},
-                                                 {'name': 'Disposition of Patient', 'length': 2,
-                                                  'justification': 'left'},
-                                                 {'name': 'Total Charges', 'length': 8, 'justification': 'right'},
-                                                 {'name': 'Abstract Record Number (Optional)', 'length': 12,
-                                                  'justification': 'left'},
-                                                 {'name': 'Prehospital Care & Resuscitation - DNR Order', 'length': 2,
-                                                  'justification': 'left'},
-                                                 {'name': 'Payer Category', 'length': 2, 'justification': 'left'},
-                                                 {'name': 'Type of Coverage', 'length': 1, 'justification': 'left'},
-                                                 {'name': 'Plan Code Number', 'length': 4, 'justification': 'right'},
-                                                 {'name': 'Preferred Spoken Language', 'length': 24,
-                                                  'justification': 'left'},
-                                                 {'name': 'Patient Address - Address Number and Street Name',
-                                                  'length': 40, 'justification': 'left'},
-                                                 {'name': 'Patient Address - City', 'length': 30,
-                                                  'justification': 'left'},
-                                                 {'name': 'Patient Address - State', 'length': 2,
-                                                  'justification': 'left'},
-                                                 {'name': 'Patient Address - Zip Code', 'length': 5,
-                                                  'justification': 'left'},
-                                                 {'name': 'Patient Address - Country Code', 'length': 2,
-                                                  'justification': 'left'},
-                                                 {'name': 'Patient Address - Homeless Indicator', 'length': 1,
-                                                  'justification': 'left'}])
-        self.fields_info = pd.DataFrame.from_dict(self.final_fields)
+        self.fields_dict = (
+                [{'name': 'Type of Care', 'length':  1, 'justification': 'left'},
+                 {'name': 'Facility Identification Number', 'length':  6, 'justification': 'left'},
+                 {'name': 'Date of Birth', 'length':  8, 'justification': 'left'},
+                 {'name': 'Sex', 'length':  1, 'justification': 'left'},
+                 {'name': 'Ethnicity', 'length':  2, 'justification': 'left'},
+                 {'name': 'Race', 'length':  10, 'justification': 'left'},
+                 {'name': 'Not in Use', 'length':  5, 'justification': 'left'},
+                 {'name': 'Admission Date', 'length':  12, 'justification': 'left'},
+                 {'name': 'Point of Origin', 'length':  1, 'justification': 'left'},
+                 {'name': 'Route of Admission', 'length':  1, 'justification': 'left'},
+                 {'name': 'Type of Admission', 'length':  1, 'justification': 'left'},
+                 {'name': 'Discharge Date', 'length':  12, 'justification': 'left'},
+                 {'name': 'Principal Diagnosis', 'length':  7, 'justification': 'left'},
+                 {'name': 'Present on Admission for Principal Diagnosis', 'length':  1, 'justification': 'left'}]
+                + diagnosis_list +
+                [{'name': 'Diagnosis Codes', 'length':  250, 'justification': 'left'},
+                 {'name': 'Present on Admission', 'length':  100, 'justification': 'left'}]
+                + procedure_list +
+                [{'name': 'Procedure Codes', 'length':  375, 'justification': 'left'},
+                 {'name': 'Procedure Dates', 'length':  375, 'justification': 'left'},
+                 {'name': 'Other Procedure Codes and Other Procedure Dates', 'length':  0, 'justification': 'left'},
+                 {'name': 'External Causes of Morbidity and Present on Admission', 'length':  96,
+                          'justification': 'left'},
+                 {'name': 'Patient SSN', 'length':  9, 'justification': 'left'},
+                 {'name': 'Disposition of Patient', 'length':  2, 'justification': 'left'},
+                 {'name': 'Total Charges', 'length':  8, 'justification': 'right'},
+                 {'name': 'Abstract Record Number (Optional)', 'length':  12, 'justification': 'left'},
+                 {'name': 'Prehospital Care & Resuscitation - DNR Order', 'length':  2, 'justification': 'left'},
+                 {'name': 'Payer Category', 'length':  2, 'justification': 'left'},
+                 {'name': 'Type of Coverage', 'length':  1, 'justification': 'left'},
+                 {'name': 'Plan Code Number', 'length':  4, 'justification': 'right'},
+                 {'name': 'Preferred Spoken Language', 'length':  24, 'justification': 'left'},
+                 {'name': 'Patient Address - Address Number and Street Name', 'length':  40, 'justification': 'left'},
+                 {'name': 'Patient Address - City', 'length':  30, 'justification': 'left'},
+                 {'name': 'Patient Address - State', 'length':  2, 'justification': 'left'},
+                 {'name': 'Patient Address - Zip Code', 'length':  5, 'justification': 'left'},
+                 {'name': 'Patient Address - Country Code', 'length':  2, 'justification': 'left'},
+                 {'name': 'Patient Address - Homeless Indicator', 'length':  1, 'justification': 'left'},
+                 {'name': 'NOT IN USE', 'length':  356, 'justification': 'left'}
+                 ])
+        self.tuple_columns = ['Procedure Codes', 'Procedure Dates', 'Diagnosis Codes', 'Present on Admission']
+        self.fields_info = pd.DataFrame.from_dict(self.fields_dict)
+        self.final_fields = self.fields_info.drop(
+                                self.fields_info[self.fields_info['name'].isin(self.tuple_columns)].index)
         self.add_demographics()
         self.add_encounters(encounter_type)
         self.add_procedures()
@@ -86,7 +82,7 @@ class FormatOutput:
         patients['Patient Address - Address Number and Street Name'] = patients.iloc[:, 16]
         patients['Patient Address - City'] = patients.iloc[:, 17]
         patients['Patient Address - State'] = patients.iloc[:, 18]
-        patients['Patient Address - Zip Code'] = patients.iloc[:, 20].fillna('XXXXX')
+        patients['Patient Address - Zip Code'] = patients.iloc[:, 21].fillna('XXXXX')
         self.output_df = patients[['patient_id', 'Date of Birth', 'Sex', 'Ethnicity', 'Race',
                                    'Patient SSN', 'Patient Address - Address Number and Street Name',
                                    'Patient Address - City', 'Patient Address - State',
@@ -110,7 +106,7 @@ class FormatOutput:
                 lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
         # encounters['Principal Diagnosis'] = encounters.iloc[:, 13]  # Needs mapping for ICD-10
         encounters['Principal Diagnosis'] = mappings.snomedicdbasicmap(encounters.iloc[:, 13])
-        encounters['Total Charges'] = encounters.iloc[:, 11].apply(lambda x: min(int(x.split('.')[0]), 9999999))
+        encounters['Total Charges'] = encounters.iloc[:, 11].apply(lambda x: str(min(int(x.split('.')[0]), 9999999)))
         print('SUB-CHECK - Encounters Shape: ', encounters.shape)
         # Prepare and merge payers info (replace IDs with real payer data) into encounters
         payers = pd.read_csv(f'{self.output_loc}/csv/payers.csv', dtype=str, parse_dates=[1, 2], header=0)
@@ -213,51 +209,41 @@ class FormatOutput:
 
     def fixed_width_output(self):
         df = self.output_df.copy()
-
-        columns = self.fields_info['name'].tolist()
-
+        columns = self.final_fields['name'].tolist()
         df = df[columns]
 
+        # Force left/right justification, min/max length and string type for each column and
+        # keep a list of this format for all our columns
         formats = []
-        for width, justification in zip(self.fields_info.length, self.fields_info.justification):
+        for length, justification in zip(self.final_fields.length, self.final_fields.justification):
             if justification == 'left':
-                fmt = '{' + f':<{width}' + '}'
-                fmt = fmt.format
+                justchar = '-'
             else:
-                fmt = '{' + f':>{width}' + '}'
-                fmt = fmt.format
-            formats.append(fmt)
-
-        tuple_columns = ['Procedure Codes', 'Procedure Dates', 'Diagnosis Codes', 'Present on Admission']
-        df = df.drop(columns=tuple_columns)
-
-        formatters = {key: value for key, value in zip(columns, formats) if key not in tuple_columns}
+                justchar = ''
+            fmt = f'%{justchar}{length}.{length}s'
+            formats += [fmt]
 
         df.fillna('', inplace=True)
 
-        fixed_width_str = df.to_string(formatters=formatters, col_space=5, header=False, index=False)
-
         print('Fixed Width Converted. Shape: ', df.shape)
-        print(fixed_width_str)
         date_time = dt.datetime.fromtimestamp(time.time())
-        filename = f'{self.output_loc}/formatted_data/fixed_width_data_{date_time.strftime("%d-%m-%Y_%H%M%S")}.csv'
-        with open(filename, "w") as text_file:
-            text_file.write(fixed_width_str)
+        filename = f'{self.output_loc}/formatted_data/fixed_width_txt_{date_time.strftime("%d-%m-%Y_%H%M%S")}.txt'
+        np.savetxt(filename, df, fmt=formats, delimiter='')
 
 
 # Functions for various formatting operations above
 def get_procedure_list():
     procedure_list = []
-    for i in range(1, 25):
+    for i in range(1, 26):
         if i == 1:
-            code = {'name': f'Principal Procedure Code', 'length': 7, 'justification': 'left'}
+            code = {'name': f'Principal Procedure Code', 'length':   7, 'justification': 'left'}
             procedure_list.append(code)
-            date = {'name': f'Principal Procedure Date', 'length': 8, 'justification': 'left'}
+            date = {'name': f'Principal Procedure Date', 'length':   8, 'justification': 'left'}
             procedure_list.append(date)
         else:
-            code = {'name': f'Procedure Code {i}', 'length': 7, 'justification': 'left'}
+            code = {'name': f'Procedure Code {i}', 'length':   7, 'justification': 'left'}
             procedure_list.append(code)
-            date = {'name': f'Procedure Date {i}', 'length': 8, 'justification': 'left'}
+            date = {'name': f'Procedure Date {i}', 'length':   8, 'justification': 'left'}
             procedure_list.append(date)
 
     return procedure_list
@@ -265,10 +251,10 @@ def get_procedure_list():
 
 def get_diagnosis_list():
     diagnosis_list = []
-    for i in range(2, 25):
-        diagnosis = {'name': f'Diagnosis {i}', 'length': 7, 'justification': 'left'}
+    for i in range(2, 26):
+        diagnosis = {'name': f'Diagnosis {i}', 'length':   7, 'justification': 'left'}
         diagnosis_list.append(diagnosis)
-        present_on_admission = {'name': f'Present on Admission {i}', 'length': 1, 'justification': 'left'}
+        present_on_admission = {'name': f'Present on Admission {i}', 'length':   1, 'justification': 'left'}
         diagnosis_list.append(present_on_admission)
 
     return diagnosis_list
@@ -279,7 +265,7 @@ def modify_row(row, df_fields, new_fields):
     second = row[df_fields[1]]
     if True:  # 'Procedure Codes' in df_fields:
         if isinstance(first, tuple) and isinstance(second, tuple):
-            for code, date, i in zip(first, second, range(1, 25)):
+            for code, date, i in zip(first, second, range(1, 26)):
                 if i == 1:
                     if new_fields[0] == 'Diagnosis':
                         row[f'Principal {new_fields[0]}'] = code
