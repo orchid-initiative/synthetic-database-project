@@ -1,4 +1,5 @@
 import datetime as dt
+from configparser import ConfigParser
 import pandas as pd
 import numpy as np
 import synth_data_module.mappings as mappings
@@ -60,6 +61,11 @@ class FormatOutput:
         self.fields_info = pd.DataFrame.from_dict(self.fields_dict)
         self.final_fields = self.fields_info.drop(
                                 self.fields_info[self.fields_info['name'].isin(self.tuple_columns)].index)
+        # Grab the synthea_settings txt file and consume the settings as a dictionary for use as needed
+        java_configs = ConfigParser()
+        with open("synthea_settings") as stream:
+            java_configs.read_string("[SETTINGS]\n" + stream.read())
+        self.country_code = java_configs['SETTINGS']['generate.geography.country_code']
         self.add_demographics()
         self.add_encounters(encounter_type)
         self.add_procedures()
@@ -83,10 +89,11 @@ class FormatOutput:
         patients['Patient Address - City'] = patients.iloc[:, 17]
         patients['Patient Address - State'] = patients.iloc[:, 18]
         patients['Patient Address - Zip Code'] = patients.iloc[:, 21].fillna('XXXXX')
+        patients['Patient Address - Country Code'] = self.country_code
         self.output_df = patients[['patient_id', 'Date of Birth', 'Sex', 'Ethnicity', 'Race',
                                    'Patient SSN', 'Patient Address - Address Number and Street Name',
                                    'Patient Address - City', 'Patient Address - State',
-                                   'Patient Address - Zip Code']]
+                                   'Patient Address - Zip Code', 'Patient Address - Country Code']]
         print('Demographics added.  Shape: ', self.output_df.shape)
         del patients
 
@@ -114,11 +121,6 @@ class FormatOutput:
         payers['Payer Category'] = payers.apply(mappings.payer_category, axis=1).astype(str)
         encounters = encounters.merge(payers[['payer_id', 'Payer Category']], how='left', left_on='payer_id',
                                       right_on='payer_id')
-        # Prepare and merge PoA codes - NOT IN USE CURRENTLY
-        # cpcds = pd.read_csv(f'{self.output_loc}/cpcds/CPCDS_Claims.csv', dtype=str, parse_dates=[1, 2], header=0)
-        # cpcds['claim_id'] = payers.iloc[:, 8]
-        # cpcds['claim_poa'] = payers.iloc[:, 90]
-        # cpcds['claim_principal'] = payers.iloc[:, 92]
         print('SUB-CHECK - Payers and codes merged.  Encounters Shape: ', encounters.shape)
         self.output_df = self.output_df.merge(encounters[['encounter_id', 'Admission Date', 'Discharge Date',
                                                           'Principal Diagnosis', 'Total Charges', 'Payer Category']],
