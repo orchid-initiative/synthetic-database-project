@@ -5,7 +5,7 @@ import datetime as dt
 
 class Synthea:
     # Intentionally using 2 spaces between args so they can be easily split later for passing into subprocess.Popen for
-    # the synthea java run.  (to support city names that contain a single space staying together)
+    # the synthea java run.  (to support city names that contain a single space staying together rather than splitting)
     def __init__(self, jar_file, config_file):
         self.java_command = f'java  -jar  {jar_file}  -c  {config_file}'
 
