@@ -34,13 +34,13 @@ The Summary Statistic Workbook provides an overview of the synthetic hospital di
 - Want to learn more about the project's scope and objectives? Check out the [project charter](documentation/PROJECT_CHARTER.md).
 - Want to run the program to create your own database? The [production guide](documentation/PRODUCTION_GUIDE.md) is coming soon...
 - Ready to contribute? Check out the [developer guide](documentation/DEVELOPER_GUIDE.md) to see our coding standards and get started contributing. 
-- Have questions or feedback? Join the discussion on our [GitHub Discussions](https://github.com/rileeki-org/synthetic-database-project/discussions) page.  Or, you can use the [GitHub issues page](https://github.com/rileeki-org/synthetic-database-project/issues) to report bugs and request new features.
+- Have questions or feedback? Join the discussion on our [GitHub Discussions](https://github.com/orchid-initiative/synthetic-database-project/discussions) page.  Or, you can use the [GitHub issues page](https://github.com/orchid-initiative/synthetic-database-project/issues) to report bugs and request new features.
 - Looking for internal project management documents? Those are stored in [this Google Drive folder](https://drive.google.com/drive/folders/1W4jLmDP6Cl9c2Ocqv08kpu6Y8ToMK7Hy).
 
 ### Additional Resources
-- Project management: https://github.com/orgs/rileeki-org/projects/1
+- Project management: https://github.com/orgs/orchid-initiative/projects/1
 - Synthea<sup>TM</sup>: https://synthetichealth.github.io/synthea/
-- Wiki: https://github.com/rileeki-org/synthetic-database-project/wiki
+- Wiki: https://github.com/orchid-initiative/synthetic-database-project/wiki
 - Slack channel (permissions required): [synthetic_discharges](https://rileeki.slack.com/archives/C04DCD1PYJE)
 - AWS (permissions required): https://rileeki.signin.aws.amazon.com/console
 - Note: .jar file is required in folder, but too large to add to our free GitHub account: https://github.com/synthetichealth/synthea/wiki/Basic-Setup-and-Running

@@ -1,1 +1,1 @@
-[Back to main README](https://github.com/rileeki-org/synthetic-database-project)
+[Back to main README](https://github.com/orchid-initiative/synthetic-database-project)
