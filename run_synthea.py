@@ -17,6 +17,7 @@ def parse_arguments():
     group.add_argument('-F', '--FormatOnly', help='Only Run Formatting code', action='store_true', default=False)
     group.add_argument('-D', '--SyntheaGenOnly', help='Only Run Synthea Data Generation, not Formatting',
                        action='store_true', default=False)
+    group.add_argument('-C', '--SpecifyCity', help='Specify the City, State for the synthea location', default=False)
     args = parser.parse_args()
     return args
 
@@ -24,6 +25,15 @@ def parse_arguments():
 def main():
     start = time.time()
     args = parse_arguments()
+    if args.SpecifyCity:
+        if len(args.SpecifyCity.split(",")) == 2:
+            city = str(args.SpecifyCity.split(",")[0])
+            state = str(args.SpecifyCity.split(",")[1])
+            print("Overriding default location Massachusetts to city, state: %s, %s " % (city, state))
+        else:
+            city = None
+            state = str(args.SpecifyCity.split(",")[0])
+            print("Overriding default location Massachusetts to state %s " % state)
 
     log.setSysOut(f'logs/{__file__}_{dt.date.today()}.log')
     output_loc = 'output/'
@@ -49,7 +59,8 @@ def main():
         synthea = Synthea(jar_file, 'synthea_settings')  # initialize the module
         synthea.specify_popsize(size=40)
         synthea.specify_gender(gender='F')
-        # synthea.specify_city('California', 'Pasadena')
+        if args.SpecifyCity:
+            synthea.specify_city(state, city)
         synthea.run_synthea()
         log.printElapsedTime(sub_start, "Females created in: ")
 
