@@ -12,12 +12,12 @@ def parse_arguments():
     parser.add_argument('-T', '--Type', help='Specify Encounter Type',
                         choices=['inpatient', 'outpatient', 'ambulatory', 'wellness', 'virtual', 'urgentcare',
                                  'emergency'], default='inpatient')
+    parser.add_argument('-C', '--SpecifyCity', help='Specify the City, State for the synthea location', default=False)
     # Add an argument to just run formatting code (i.e. bypass running synthea again and do not delete output/ files)
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-F', '--FormatOnly', help='Only Run Formatting code', action='store_true', default=False)
     group.add_argument('-D', '--SyntheaGenOnly', help='Only Run Synthea Data Generation, not Formatting',
                        action='store_true', default=False)
-    group.add_argument('-C', '--SpecifyCity', help='Specify the City, State for the synthea location', default=False)
     args = parser.parse_args()
     return args
 

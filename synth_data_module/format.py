@@ -23,7 +23,7 @@ class FormatOutput:
                  {'name': 'Sex', 'length':  1, 'justification': 'left'},
                  {'name': 'Ethnicity', 'length':  2, 'justification': 'left'},
                  {'name': 'Race', 'length':  10, 'justification': 'left'},
-                 {'name': 'Not in Use', 'length':  5, 'justification': 'left'},
+                 {'name': 'Not in Use 1', 'length':  5, 'justification': 'left'},
                  {'name': 'Admission Date', 'length':  12, 'justification': 'left'},
                  {'name': 'Point of Origin', 'length':  1, 'justification': 'left'},
                  {'name': 'Route of Admission', 'length':  1, 'justification': 'left'},
@@ -37,7 +37,6 @@ class FormatOutput:
                 + procedure_list +
                 [{'name': 'Procedure Codes', 'length':  375, 'justification': 'left'},
                  {'name': 'Procedure Dates', 'length':  375, 'justification': 'left'},
-                 {'name': 'Other Procedure Codes and Other Procedure Dates', 'length':  0, 'justification': 'left'},
                  {'name': 'External Causes of Morbidity and Present on Admission', 'length':  96,
                           'justification': 'left'},
                  {'name': 'Patient SSN', 'length':  9, 'justification': 'left'},
@@ -55,7 +54,7 @@ class FormatOutput:
                  {'name': 'Patient Address - Zip Code', 'length':  5, 'justification': 'left'},
                  {'name': 'Patient Address - Country Code', 'length':  2, 'justification': 'left'},
                  {'name': 'Patient Address - Homeless Indicator', 'length':  1, 'justification': 'left'},
-                 {'name': 'NOT IN USE', 'length':  356, 'justification': 'left'}
+                 {'name': 'Not in Use 2', 'length':  356, 'justification': 'left'}
                  ])
         self.tuple_columns = ['Procedure Codes', 'Procedure Dates', 'Diagnosis Codes', 'Present on Admission']
         self.fields_info = pd.DataFrame.from_dict(self.fields_dict)
@@ -188,27 +187,47 @@ class FormatOutput:
         del diagnosis
 
     def hard_coding(self):
-        self.output_df['Type of Care'] = 1
-        self.output_df['Facility Identification Number'] = self.facility_id
-        self.output_df['Not in Use'] = '     '
-        self.output_df['Type of Admission'] = np.random.choice(['1', '2', '3', '4', '5', '9'], size=len(self.output_df))
-        self.output_df['Point of Origin'] = np.random.choice(['1', '2', '4', '5', '6', '8', 'D', 'E', 'F', 'G'])
-        self.output_df.loc[self.output_df['Type of Admission'] == '4', 'Point of Origin'] = np.random.choice(['5', '6'])
-        self.output_df['Route of Admission'] = '3'
-        self.output_df.loc[self.output_df['Type of Admission'] == '1', 'Route of Admission'] = np.random.choice(
-            ['1', '2'])
-        self.output_df['Disposition of Patient'] = np.random.choice(mappings.disposition(), size=len(self.output_df))
-        self.output_df['Prehospital Care & Resuscitation - DNR Order'] = np.random.choice(['Y', 'N'],
-                                                                                          size=len(self.output_df))
-        self.output_df['Abstract Record Number (Optional)'] = np.arange(1, len(self.output_df) + 1)
+        # Hard code Type of Care to be 1 ("Acute Care") always for now
+        care_s = pd.Series([1 for x in range(len(self.output_df.index))])
+        self.output_df = pd.concat([self.output_df,care_s.rename('Type of Care')], axis=1)
+
+        # Hard code Facility ID to be the passed in value from run_synthea
+        # Todo: make this a runtime arg with a default value
+        facility_s = pd.Series([self.facility_id for x in range(len(self.output_df.index))])
+        self.output_df = pd.concat([self.output_df, facility_s.rename('Facility Identification Number')], axis=1)
+
+        # Randomly assign Type of Admission, Point of Origin, Route of Admission
+        ta_s = pd.Series(np.random.choice(['1', '2', '3', '4', '5', '9'], size=len(self.output_df)))
+        self.output_df = pd.concat([self.output_df, ta_s.rename('Type of Admission')], axis=1)
+        po_s = pd.Series(np.random.choice(['1', '2', '4', '5', '6', '8', 'D', 'E', 'F', 'G'], size=len(self.output_df)))
+        self.output_df = pd.concat([self.output_df, po_s.rename('Point of Origin')], axis=1)
+        ra_s = pd.Series([3 for x in range(len(self.output_df.index))])
+        self.output_df = pd.concat([self.output_df, ra_s.rename('Route of Admission')], axis=1)
+
+        # Narrow the choices of Point of Origin or Route of Admission depending on Type of Admission Value
+        self.output_df.loc[self.output_df['Type of Admission'] == '4', 'Point of Origin'] = \
+            np.random.choice(['5', '6'], size=len(self.output_df.loc[self.output_df['Type of Admission'] == '4']))
+        self.output_df.loc[self.output_df['Type of Admission'] == '1', 'Route of Admission'] = \
+            np.random.choice(['1', '2'], size=len(self.output_df.loc[self.output_df['Type of Admission'] == '1']))
+
+        disposition_s = pd.Series(np.random.choice(mappings.disposition(), size=len(self.output_df)))
+        self.output_df = pd.concat([self.output_df, disposition_s.rename('Disposition of Patient')], axis=1)
+
+        dnr_s = pd.Series(np.random.choice(['Y', 'N'], size=len(self.output_df)))
+        self.output_df = pd.concat([self.output_df, dnr_s.rename('Prehospital Care & Resuscitation - DNR Order')], axis=1)
+
+        arn_s = pd.Series(np.arange(1, len(self.output_df) + 1))
+        self.output_df = pd.concat([self.output_df, arn_s.rename('Abstract Record Number (Optional)')], axis=1)
         print('Hard-coded fields added.  Shape: ', self.output_df.shape)
 
     def fill_missing(self):
         cols = list(self.output_df.columns)
-        missing = list(set(self.fields_info['name'].tolist()).difference(cols))
+        missing = list(set(self.final_fields['name'].tolist()).difference(cols))
+        none_s = pd.Series([None for x in range(len(self.output_df.index))])
         for col in missing:
-            print(col, " is missing, assigning null values")
-            self.output_df[col] = None
+            print(col, "is missing, assigning null values")
+            # self.output_df[col] = None
+            self.output_df = pd.concat([self.output_df, none_s.rename(col)], axis=1)
 
     def fixed_width_output(self):
         df = self.output_df.copy()
@@ -236,6 +255,8 @@ class FormatOutput:
 
 # Functions for various formatting operations above
 def get_procedure_list():
+    # For Procedures, we are not given a principal vs other distinction from Synthea.  We use the first one in the list
+    # as the principal procedure.
     procedure_list = []
     for i in range(1, 26):
         if i == 1:
