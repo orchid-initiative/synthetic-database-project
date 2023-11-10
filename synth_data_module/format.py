@@ -7,6 +7,7 @@ import glob
 import os
 import time
 from  abc  import ABC, abstractmethod
+from io import StringIO
 
 class Formatter(ABC):
     @abstractmethod
@@ -100,9 +101,13 @@ class FormatOutput(Formatter):
         date_time = dt.datetime.fromtimestamp(time.time())
 
     def format_data(self, _data):
-        sbuffer = StringBuffer() // ?
+        # StringIO acts like a file object, but collects its output in
+        # a string instead of writing to a file.
+        sbuffer = StringIO()
         self.output_df[self.fields_info['name'].tolist()].to_csv(sbuffer, index=False)
-        return sbuffer.to_str()
+
+        # getvalue() returns the string built up inside of the StringIO.
+        return sbuffer.getvalue()
 
     def suggested_filename(self) -> str:
         date_time = ...
