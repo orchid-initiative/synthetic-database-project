@@ -21,7 +21,6 @@ class Synthea:
     # used if you want to focus on one area - one can also specify hospital list in overrides/hospitals file in the Jar
     def specify_city(self, state, city=None):
         if city:
-            print("I am passing in:"+ f' {state}  "{city}"')
             self.java_command = self.java_command + f'  {state}  {city}'
         else:
             self.java_command = self.java_command + f'  {state}'

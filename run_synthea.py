@@ -53,11 +53,12 @@ def main():
         # Run Synthea with global parameters and run-specific parameters
         log.printSectionHeader('Running Synthea')
 
+        # TODO probably take out the M/F separation in favor of more general statistic seeking results
         # Collect Females
         log.printSectionSubHeader('Creating Female Records')
         sub_start = time.time()
         synthea = Synthea(jar_file, 'synthea_settings')  # initialize the module
-        synthea.specify_popsize(size=40)
+        synthea.specify_popsize(size=500)
         synthea.specify_gender(gender='F')
         if args.SpecifyCity:
             synthea.specify_city(state, city)
@@ -65,13 +66,15 @@ def main():
         log.printElapsedTime(sub_start, "Females created in: ")
 
         # Collect Males
-        '''log.printSectionSubHeader('Creating Male Records')
+        log.printSectionSubHeader('Creating Male Records')
         sub_start = time.time()
         synthea = Synthea(jar_file, 'synthea_settings') # initialize the module
-        synthea.specify_popsize(size=1220)
+        synthea.specify_popsize(size=500)
         synthea.specify_gender(gender='M')
+        if args.SpecifyCity:
+            synthea.specify_city(state, city)
         synthea.run_synthea()
-        log.printElapsedTime(sub_start, "Males created in: ")'''
+        log.printElapsedTime(sub_start, "Males created in: ")
 
     # Format data to our desired layout
     log.printSectionHeader('Formatting Data')
