@@ -12,12 +12,12 @@ def parse_arguments():
     parser.add_argument('-T', '--Type', help='Specify Encounter Type',
                         choices=['inpatient', 'outpatient', 'ambulatory', 'wellness', 'virtual', 'urgentcare',
                                  'emergency'], default='inpatient')
+    parser.add_argument('-C', '--SpecifyCity', help='Specify the City, State for the synthea location', default=False)
     # Add an argument to just run formatting code (i.e. bypass running synthea again and do not delete output/ files)
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-F', '--FormatOnly', help='Only Run Formatting code', action='store_true', default=False)
     group.add_argument('-D', '--SyntheaGenOnly', help='Only Run Synthea Data Generation, not Formatting',
                        action='store_true', default=False)
-    group.add_argument('-C', '--SpecifyCity', help='Specify the City, State for the synthea location', default=False)
     args = parser.parse_args()
     return args
 
@@ -53,11 +53,12 @@ def main():
         # Run Synthea with global parameters and run-specific parameters
         log.printSectionHeader('Running Synthea')
 
+        # TODO probably take out the M/F separation in favor of more general statistic seeking results
         # Collect Females
         log.printSectionSubHeader('Creating Female Records')
         sub_start = time.time()
         synthea = Synthea(jar_file, 'synthea_settings')  # initialize the module
-        synthea.specify_popsize(size=40)
+        synthea.specify_popsize(size=500)
         synthea.specify_gender(gender='F')
         if args.SpecifyCity:
             synthea.specify_city(state, city)
@@ -65,13 +66,15 @@ def main():
         log.printElapsedTime(sub_start, "Females created in: ")
 
         # Collect Males
-        '''log.printSectionSubHeader('Creating Male Records')
+        log.printSectionSubHeader('Creating Male Records')
         sub_start = time.time()
         synthea = Synthea(jar_file, 'synthea_settings') # initialize the module
-        synthea.specify_popsize(size=1220)
+        synthea.specify_popsize(size=500)
         synthea.specify_gender(gender='M')
+        if args.SpecifyCity:
+            synthea.specify_city(state, city)
         synthea.run_synthea()
-        log.printElapsedTime(sub_start, "Males created in: ")'''
+        log.printElapsedTime(sub_start, "Males created in: ")
 
     # Format data to our desired layout
     log.printSectionHeader('Formatting Data')
