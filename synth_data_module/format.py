@@ -6,15 +6,39 @@ import synth_data_module.mappings as mappings
 import glob
 import os
 import time
+from  abc  import ABC, abstractmethod
 
+class Formatter(ABC):
+    @abstractmethod
+    def format_data(self, synthea_output, data) -> str:
+        pass
 
-class FormatOutput:
-    def __init__(self, facility_id, output_loc, encounter_type):
+    @abstractmethod
+    def suggested_filename(self) -> Path:
+        pass
+
+# factory method
+def create_formatter(format_type: str, settings: argparse.Namespace) -> Formatter:
+    if format_type == "california_hospital_fixed_width":
+        return FormatOutput( settings, output = "fixed_width" )
+    elif format_type == "california_hospital_csv":
+        return FormatOutput(settings, output = "csv" )
+    else format_type == "medicare_":
+        return MedicareFormat(settings, "...")
+        #....
+
+formatter = create_formatter("california_hospital_fixed_width", args)
+
+with open(formatter.suggested_filename(), "w") as f:
+    f.write(formatter.format_data(data))
+
+class FormatOutput(Formatter):
+    def __init__(self, facility_id, output_loc, encounter_type, synthea_ouptut):
         self.output_df = None
         self.output_loc = output_loc
         self.facility_id = facility_id
         self.encounter_type = encounter_type
-        procedure_list = get_procedure_list()
+        procedure_list = synthea_output.procedures_df(["a", "b", "c"]) #get_procedure_list()
         diagnosis_list = get_diagnosis_list()
         self.fields_dict = (
                 [{'name': 'Type of Care', 'length':  1, 'justification': 'left'},
@@ -74,8 +98,15 @@ class FormatOutput:
         self.fill_missing()
         self.fixed_width_output()
         date_time = dt.datetime.fromtimestamp(time.time())
-        self.output_df[self.fields_info['name'].tolist()].to_csv(
-            f'{output_loc}/formatted_data/csv_formatted_data_{date_time.strftime("%d-%m-%Y_%H%M%S")}.csv', index=False)
+
+    def format_data(self, _data):
+        sbuffer = StringBuffer() // ?
+        self.output_df[self.fields_info['name'].tolist()].to_csv(sbuffer, index=False)
+        return sbuffer.to_str()
+
+    def suggested_filename(self) -> str:
+        date_time = ...
+        return f'{self.output_loc}/formatted_data/csv_formatted_data_{date_time.strftime("%d-%m-%Y_%H%M%S")}.csv'
 
     def add_demographics(self, ):
         patients = pd.read_csv(f'{self.output_loc}/csv/patients.csv', dtype=str, header=None)

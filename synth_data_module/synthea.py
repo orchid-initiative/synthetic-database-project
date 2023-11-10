@@ -1,7 +1,14 @@
 import subprocess
 import time
 import datetime as dt
+import pandas as pd
 
+class SyntheaOutput:
+    def procedure_list_file(self)-> str:
+        return "procedure_list_file.csv"
+
+    def procedure_df(subfields) -> pd.DataFrame:
+        pass
 
 class Synthea:
     # Intentionally using 2 spaces between args so they can be easily split later for passing into subprocess.Popen for
