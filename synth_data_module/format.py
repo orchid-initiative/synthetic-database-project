@@ -74,7 +74,7 @@ class FormatOutput:
         self.fill_missing()
         self.fixed_width_output()
         date_time = dt.datetime.fromtimestamp(time.time())
-        self.output_df[self.fields_info['name'].tolist()].to_csv(
+        self.output_df[self.final_fields['name'].tolist()].to_csv(
             f'{output_loc}/formatted_data/csv_formatted_data_{date_time.strftime("%d-%m-%Y_%H%M%S")}.csv', index=False)
 
     def add_demographics(self, ):
