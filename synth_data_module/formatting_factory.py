@@ -7,7 +7,7 @@ def create_formatter(args, synthea_output) -> Formatter: #, settings: argparse.N
     if args.FormatType == "HCAI_FW":
         return HCAIFormat(args, synthea_output=synthea_output, csv=False)
     elif args.FormatType == "HCAI_CSV":
-        return HCAIFormat(args, synthesa_output=synthea_output, csv=True)
+        return HCAIFormat(args, synthea_output=synthea_output, csv=True)
 #    elif args.FormatType == "NEW_NEW":
 #        return NEW_Format(settings, "...")
         #....
