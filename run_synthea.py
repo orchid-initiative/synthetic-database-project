@@ -80,8 +80,9 @@ def format_data(args):
     # Format data to our desired layout
     log.printSectionHeader('Formatting Data')
     form_start = time.time()
-    if not args.SyntheaGenOnly:
-        create_formatter(args, synthea_output=SyntheaOutput())
+    formatter = create_formatter(args, synthea_output=SyntheaOutput())
+    data = formatter.format_data()
+    formatter.write_data(data)
     log.printElapsedTime(form_start, "Formatted output created in: ")
 
 

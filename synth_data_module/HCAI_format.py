@@ -12,7 +12,7 @@ class HCAIFormat(Formatter):
     def __init__(self, args, synthea_output, csv=False, facility_id='010735'):
         self.output_df = pd.DataFrame
         self.facility_id = facility_id
-        self.encounter_type = args.EncounterType
+        self.args = args
         self.synthea_output = synthea_output
         procedure_list = get_procedure_list()
         diagnosis_list = get_diagnosis_list()
@@ -59,9 +59,9 @@ class HCAIFormat(Formatter):
                  ])
         self.exclude_columns = ['Facility Name', 'Procedure Codes', 'Procedure Dates', 'Diagnosis Codes',
                                 'Present on Admission']
-        self.fields_info = pd.DataFrame.from_dict(self.fields_dict)
-        self.final_fields = self.fields_info.drop(
-            self.fields_info[self.fields_info['name'].isin(self.exclude_columns)].index)
+        self.all_fields = pd.DataFrame.from_dict(self.fields_dict)
+        self.final_fields = self.all_fields.drop(
+            self.all_fields[self.all_fields['name'].isin(self.exclude_columns)].index)
         # Grab the synthea_settings txt file and consume the settings as a dictionary for use as needed
         java_configs = ConfigParser()
         with open("synthea_settings") as stream:
@@ -73,32 +73,77 @@ class HCAIFormat(Formatter):
         self.add_other_diagnosis()
         self.hard_coding()
         self.fill_missing()
-        self.fixed_width_output()
-        date_time = dt.datetime.fromtimestamp(time.time())
-        if csv and args.Verbose:
-            self.output_df[self.fields_info['name'].tolist()].to_csv(
-                f'{self.synthea_output.output_loc}/formatted_data/csv_formatted_data_'
-                f'{date_time.strftime("%d-%m-%Y_%H%M%S")}.csv',
-                index=False)
-        elif csv:
-            self.output_df[self.final_fields['name'].tolist()].to_csv(
-                f'{self.synthea_output.output_loc}/formatted_data/csv_formatted_data_'
-                f'{date_time.strftime("%d-%m-%Y_%H%M%S")}.csv',
-                index=False)
 
-    def format_data(self, synthea_output, data):
+    def fixed_width_output(self):
+        df = self.output_df.copy()
+        columns = self.final_fields['name'].tolist()
+        df = df[columns]
+
+        # Force left/right justification, min/max length and string type for each column and
+        # keep a list of this format for all our columns
+        formats = []
+        for length, justification in zip(self.final_fields.length, self.final_fields.justification):
+            if justification == 'left':
+                justchar = '-'
+            else:
+                justchar = ''
+            fmt = f'%{justchar}{length}.{length}s'
+            formats += [fmt]
+
+        df.fillna('', inplace=True)
+
+        print('Fixed Width Converted. Shape: ', df.shape)
+        date_time = dt.datetime.fromtimestamp(time.time())
+        filename = f'{self.synthea_output.output_loc}/formatted_data/fixed_width_txt_' \
+                   f'{date_time.strftime("%d-%m-%Y_%H%M%S")}.txt'
+        np.savetxt(filename, df, fmt=formats, delimiter='')
+
+    def format_data(self):
         # StringIO acts like a file object, but collects its output in
         # a string instead of writing to a file.
         sbuffer = StringIO()
-        self.output_df[self.final_fields['name'].tolist()].to_csv(sbuffer, index=False)
+        df = self.output_df.copy()
+
+        # CSV data formatting
+        if "CSV" in self.args.FormatType:
+            if self.args.Verbose:
+                df[self.all_fields['name'].tolist()].to_csv(sbuffer, index=False)
+            else:
+                df[self.final_fields['name'].tolist()].to_csv(sbuffer, index=False)
+
+        # Fixed width data formatting
+        else:
+            df = df[self.final_fields['name'].tolist()]
+            # Force left/right justification, min/max length and string type for each column and
+            # keep a list of this format for all our columns
+            formats = []
+            for length, justification in zip(self.final_fields.length, self.final_fields.justification):
+                if justification == 'left':
+                    justchar = '-'
+                else:
+                    justchar = ''
+                fmt = f'%{justchar}{length}.{length}s'
+                formats += [fmt]
+            df.fillna('', inplace=True)
+            np.savetxt(sbuffer, df, fmt=formats, delimiter='')
 
         # getvalue() returns the string built up inside of the StringIO.
         return sbuffer.getvalue()
 
     def suggested_filename(self) -> str:
-        date_time = ...
-        return f'{self.synthea_output.output_loc}/formatted_data/csv_formatted_data_' \
-               f'{date_time.strftime("%d-%m-%Y_%H%M%S")}.csv'
+        if "CSV" in self.args.FormatType:
+            ftype = "csv"
+            fextension = "csv"
+        else:
+            ftype = "fw"
+            fextension = "txt"
+        date_time = dt.datetime.fromtimestamp(time.time())
+        return f'{self.synthea_output.output_loc}/formatted_data/HCAI/{ftype}_HCAI_data_' \
+               f'{date_time.strftime("%m-%d-%Y_%H%M")}.{fextension}'
+
+    def write_data(self, data, filename=None):
+        with open(filename or self.suggested_filename(), "w") as f:
+            f.write(data)
 
     def add_demographics(self):
         patients = self.synthea_output.patients_df()
@@ -126,8 +171,8 @@ class HCAIFormat(Formatter):
         encounters['organization_id'] = encounters.iloc[:, 4]
         encounters['payer_id'] = encounters.iloc[:, 6]
         encounters['EncounterClass'] = encounters.iloc[:, 7]
-        if self.encounter_type:
-            encounters = encounters.loc[encounters['EncounterClass'] == self.encounter_type, :].copy()
+        if self.args.EncounterType:
+            encounters = encounters.loc[encounters['EncounterClass'] == self.args.EncounterType, :].copy()
 
         # We had some issues getting the date format correct if headers were used in synthea, this try/except handles
         # both cases more smoothly now
@@ -274,27 +319,3 @@ class HCAIFormat(Formatter):
             print(col, "is missing, assigning null values")
             # self.output_df[col] = None
             self.output_df = pd.concat([self.output_df, none_s.rename(col)], axis=1)
-
-    def fixed_width_output(self):
-        df = self.output_df.copy()
-        columns = self.final_fields['name'].tolist()
-        df = df[columns]
-
-        # Force left/right justification, min/max length and string type for each column and
-        # keep a list of this format for all our columns
-        formats = []
-        for length, justification in zip(self.final_fields.length, self.final_fields.justification):
-            if justification == 'left':
-                justchar = '-'
-            else:
-                justchar = ''
-            fmt = f'%{justchar}{length}.{length}s'
-            formats += [fmt]
-
-        df.fillna('', inplace=True)
-
-        print('Fixed Width Converted. Shape: ', df.shape)
-        date_time = dt.datetime.fromtimestamp(time.time())
-        filename = f'{self.synthea_output.output_loc}/formatted_data/fixed_width_txt_' \
-                   f'{date_time.strftime("%d-%m-%Y_%H%M%S")}.txt'
-        np.savetxt(filename, df, fmt=formats, delimiter='')

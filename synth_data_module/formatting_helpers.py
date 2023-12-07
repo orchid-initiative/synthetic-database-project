@@ -5,12 +5,17 @@ from abc import ABC, abstractmethod
 
 class Formatter(ABC):
     @abstractmethod
-    def format_data(self, synthea_output, data) -> str:
+    def format_data(self) -> str:
         pass
 
     @abstractmethod
-    def suggested_filename(self):
+    def suggested_filename(self) -> str:
         pass
+
+    @abstractmethod
+    def write_data(self, data):
+        pass
+
 
 # Functions for various formatting operations
 def get_procedure_list():
