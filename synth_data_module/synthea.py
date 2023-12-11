@@ -54,19 +54,6 @@ class Synthea:
         elif state:
             self.java_command = self.java_command + f'  {state}'
 
-    def parse_city(self, specify_city=None):
-        city = None
-        state = None
-        if specify_city:
-            if len(specify_city.split(",")) == 2:
-                city = str(specify_city.split(",")[0])
-                state = str(specify_city.split(",")[1])
-                print("Overriding default location Massachusetts to city, state: %s, %s " % (city, state))
-            else:
-                state = str(specify_city.split(",")[0])
-                print("Overriding default location Massachusetts to state %s " % state)
-        return city, state
-
 
     def run_synthea(self):
         # Split by double space to allow for multi-word city names (that are separated by 1 space).  It's very likely
@@ -76,7 +63,7 @@ class Synthea:
         output_str = child.stdout.read().decode()  # decode converts from bytes to string object
         timestamp = time.time()
         date_time = dt.datetime.fromtimestamp(timestamp)
-        with open(f'logs/full_synthea_stdout_{date_time.strftime("%d-%m-%Y_%H%M%S")}.txt', 'w') as output:
+        with open(f'logs/full_synthea_stdout_{date_time.strftime("%Y-%m-%d_%H%M%S")}.txt', 'w') as output:
             output.write(output_str)
         run_options = output_str[output_str.index('Running with options'):output_str.index(' -- ') - 2]
         total_records = output_str[output_str.index('Records: '):output_str.index('RNG')]

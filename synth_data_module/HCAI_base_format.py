@@ -1,102 +1,36 @@
-import datetime as dt
+from abc import ABC, abstractmethod
 from configparser import ConfigParser
-from synth_data_module import Formatter, get_procedure_list, get_diagnosis_list, modify_row
+from synth_data_module import Formatter, SyntheaOutput, modify_row
+import datetime as dt
 import pandas as pd
 import numpy as np
 import synth_data_module.mappings as mappings
-import time
 from io import StringIO
 
 
-class HCAIFormat(Formatter):
-    def __init__(self, args, synthea_output, csv=False, facility_id='010735'):
+class HCAIBase(Formatter, ABC):
+    def __init__(self, **kwargs):
         self.output_df = pd.DataFrame
-        self.facility_id = facility_id
-        self.args = args
-        self.synthea_output = synthea_output
-        procedure_list = get_procedure_list()
-        diagnosis_list = get_diagnosis_list()
-        self.fields_dict = (
-                [{'name': 'Type of Care', 'length': 1, 'justification': 'left'},
-                 {'name': 'Facility Identification Number', 'length': 6, 'justification': 'left'},
-                 {'name': 'Facility Name', 'length': 0, 'justification': 'left'},
-                 {'name': 'Date of Birth', 'length': 8, 'justification': 'left'},
-                 {'name': 'Sex', 'length': 1, 'justification': 'left'},
-                 {'name': 'Ethnicity', 'length': 2, 'justification': 'left'},
-                 {'name': 'Race', 'length': 10, 'justification': 'left'},
-                 {'name': 'Not in Use 1', 'length': 5, 'justification': 'left'},
-                 {'name': 'Admission Date', 'length': 12, 'justification': 'left'},
-                 {'name': 'Point of Origin', 'length': 1, 'justification': 'left'},
-                 {'name': 'Route of Admission', 'length': 1, 'justification': 'left'},
-                 {'name': 'Type of Admission', 'length': 1, 'justification': 'left'},
-                 {'name': 'Discharge Date', 'length': 12, 'justification': 'left'},
-                 {'name': 'Principal Diagnosis', 'length': 7, 'justification': 'left'},
-                 {'name': 'Present on Admission for Principal Diagnosis', 'length': 1, 'justification': 'left'}]
-                + diagnosis_list +
-                [{'name': 'Diagnosis Codes', 'length': 250, 'justification': 'left'},
-                 {'name': 'Present on Admission', 'length': 100, 'justification': 'left'}]
-                + procedure_list +
-                [{'name': 'Procedure Codes', 'length': 375, 'justification': 'left'},
-                 {'name': 'Procedure Dates', 'length': 375, 'justification': 'left'},
-                 {'name': 'External Causes of Morbidity and Present on Admission', 'length': 96,
-                  'justification': 'left'},
-                 {'name': 'Patient SSN', 'length': 9, 'justification': 'left'},
-                 {'name': 'Disposition of Patient', 'length': 2, 'justification': 'left'},
-                 {'name': 'Total Charges', 'length': 8, 'justification': 'right'},
-                 {'name': 'Abstract Record Number (Optional)', 'length': 12, 'justification': 'left'},
-                 {'name': 'Prehospital Care & Resuscitation - DNR Order', 'length': 2, 'justification': 'left'},
-                 {'name': 'Payer Category', 'length': 2, 'justification': 'left'},
-                 {'name': 'Type of Coverage', 'length': 1, 'justification': 'left'},
-                 {'name': 'Plan Code Number', 'length': 4, 'justification': 'right'},
-                 {'name': 'Preferred Spoken Language', 'length': 24, 'justification': 'left'},
-                 {'name': 'Patient Address - Address Number and Street Name', 'length': 40, 'justification': 'left'},
-                 {'name': 'Patient Address - City', 'length': 30, 'justification': 'left'},
-                 {'name': 'Patient Address - State', 'length': 2, 'justification': 'left'},
-                 {'name': 'Patient Address - Zip Code', 'length': 5, 'justification': 'left'},
-                 {'name': 'Patient Address - Country Code', 'length': 2, 'justification': 'left'},
-                 {'name': 'Patient Address - Homeless Indicator', 'length': 1, 'justification': 'left'},
-                 {'name': 'Not in Use 2', 'length': 356, 'justification': 'left'}
-                 ])
-        self.exclude_columns = ['Facility Name', 'Procedure Codes', 'Procedure Dates', 'Diagnosis Codes',
-                                'Present on Admission']
-        self.all_fields = pd.DataFrame.from_dict(self.fields_dict)
-        self.final_fields = self.all_fields.drop(
-            self.all_fields[self.all_fields['name'].isin(self.exclude_columns)].index)
+        self.synthea_output = SyntheaOutput()
+        self.kwargs = kwargs
+        self.facility_id = self.kwargs['FacilityID']
+        # TODO all_fields and final_fields will be defined in the subclass - I dont know the proper way to handle this
+        self.all_fields = pd.DataFrame()
+        self.final_fields = pd.DataFrame()
+
         # Grab the synthea_settings txt file and consume the settings as a dictionary for use as needed
         java_configs = ConfigParser()
         with open("synthea_settings") as stream:
             java_configs.read_string("[SETTINGS]\n" + stream.read())
         self.country_code = java_configs['SETTINGS']['generate.geography.country_code']
+
+    def gather_data(self):
         self.add_demographics()
         self.add_encounters()
         self.add_procedures()
         self.add_other_diagnosis()
         self.hard_coding()
         self.fill_missing()
-
-    def fixed_width_output(self):
-        df = self.output_df.copy()
-        columns = self.final_fields['name'].tolist()
-        df = df[columns]
-
-        # Force left/right justification, min/max length and string type for each column and
-        # keep a list of this format for all our columns
-        formats = []
-        for length, justification in zip(self.final_fields.length, self.final_fields.justification):
-            if justification == 'left':
-                justchar = '-'
-            else:
-                justchar = ''
-            fmt = f'%{justchar}{length}.{length}s'
-            formats += [fmt]
-
-        df.fillna('', inplace=True)
-
-        print('Fixed Width Converted. Shape: ', df.shape)
-        date_time = dt.datetime.fromtimestamp(time.time())
-        filename = f'{self.synthea_output.output_loc}/formatted_data/fixed_width_txt_' \
-                   f'{date_time.strftime("%d-%m-%Y_%H%M%S")}.txt'
-        np.savetxt(filename, df, fmt=formats, delimiter='')
 
     def format_data(self):
         # StringIO acts like a file object, but collects its output in
@@ -105,8 +39,8 @@ class HCAIFormat(Formatter):
         df = self.output_df.copy()
 
         # CSV data formatting
-        if "CSV" in self.args.FormatType:
-            if self.args.Verbose:
+        if "CSV" in self.kwargs['FormatType']:
+            if self.kwargs['Verbose']:
                 df[self.all_fields['name'].tolist()].to_csv(sbuffer, index=False)
             else:
                 df[self.final_fields['name'].tolist()].to_csv(sbuffer, index=False)
@@ -130,17 +64,6 @@ class HCAIFormat(Formatter):
         # getvalue() returns the string built up inside of the StringIO.
         return sbuffer.getvalue()
 
-    def suggested_filename(self) -> str:
-        if "CSV" in self.args.FormatType:
-            ftype = "csv"
-            fextension = "csv"
-        else:
-            ftype = "fw"
-            fextension = "txt"
-        date_time = dt.datetime.fromtimestamp(time.time())
-        return f'{self.synthea_output.output_loc}/formatted_data/HCAI/{ftype}_HCAI_data_' \
-               f'{date_time.strftime("%m-%d-%Y_%H%M")}.{fextension}'
-
     def write_data(self, data, filename=None):
         with open(filename or self.suggested_filename(), "w") as f:
             f.write(data)
@@ -148,72 +71,34 @@ class HCAIFormat(Formatter):
     def add_demographics(self):
         patients = self.synthea_output.patients_df()
         patients['patient_id'] = patients.iloc[:, 0]
-        patients['Date of Birth'] = patients.iloc[:, 1].apply(lambda x: x.replace('-', ''))
+        try:
+            patients['Date of Birth'] = patients.iloc[:, 1].apply(lambda x: x.strftime('%m%d%Y'))
+            patients['Date of Birth Raw'] = patients.iloc[:, 1].apply(lambda x: x.strftime('%m%d%Y'))
+        except AttributeError:
+            patients['Date of Birth'] = patients.iloc[:, 1].apply(
+                lambda x: dt.datetime.strptime(x, '%Y-%m-%d').strftime('%m%d%Y'))
+            patients['Date of Birth Raw'] = patients.iloc[:, 1 ].apply(
+                lambda x: dt.datetime.strptime(x, '%Y-%m-%d').strftime('%m%d%Y'))
         patients['Sex'] = patients.iloc[:, 14]
         patients['Ethnicity'] = mappings.ethnicity(patients.iloc[:, 13])
         patients['Race'] = mappings.race(patients.iloc[:, 12])
-        patients['Patient SSN'] = patients.iloc[:, 3].fillna('000000001').apply(lambda x: x.replace('-', ''))
+        patients['Social Security Number'] = patients.iloc[:, 3].fillna('000000001').apply(lambda x: x.replace('-', ''))
+        patients['Record Linkage Number'] = patients.iloc[:, 3].fillna('000000001').apply(lambda x: x.replace('-', ''))
         patients['Patient Address - Address Number and Street Name'] = patients.iloc[:, 16]
         patients['Patient Address - City'] = patients.iloc[:, 17]
         patients['Patient Address - State'] = patients.iloc[:, 18]
         patients['Patient Address - Zip Code'] = patients.iloc[:, 21].fillna('XXXXX')
         patients['Patient Address - Country Code'] = self.country_code
-        self.output_df = patients[['patient_id', 'Date of Birth', 'Sex', 'Ethnicity', 'Race',
-                                   'Patient SSN', 'Patient Address - Address Number and Street Name',
+        self.output_df = patients[['patient_id', 'Date of Birth', 'Date of Birth Raw', 'Sex', 'Ethnicity', 'Race',
+                                   'Social Security Number', 'Record Linkage Number', 'Patient Address - Address Number and Street Name',
                                    'Patient Address - City', 'Patient Address - State',
                                    'Patient Address - Zip Code', 'Patient Address - Country Code']]
         print('Demographics added.  Shape: ', self.output_df.shape)
         del patients
 
-    def add_encounters(self):
-        encounters = self.synthea_output.encounters_df()
-        encounters['encounter_id'] = encounters.iloc[:, 0]
-        encounters['organization_id'] = encounters.iloc[:, 4]
-        encounters['payer_id'] = encounters.iloc[:, 6]
-        encounters['EncounterClass'] = encounters.iloc[:, 7]
-        if self.args.EncounterType:
-            encounters = encounters.loc[encounters['EncounterClass'] == self.args.EncounterType, :].copy()
-
-        # We had some issues getting the date format correct if headers were used in synthea, this try/except handles
-        # both cases more smoothly now
-        try:
-            encounters['Admission Date'] = encounters.iloc[:, 1].apply(lambda x: x.strftime('%Y%m%d'))
-            encounters['Discharge Date'] = encounters.iloc[:, 2].apply(lambda x: x.strftime('%Y%m%d'))
-        except TypeError:
-            encounters['Admission Date'] = encounters.iloc[:, 1].apply(
-                lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
-            encounters['Discharge Date'] = encounters.iloc[:, 2].apply(
-                lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
-        # encounters['Principal Diagnosis'] = encounters.iloc[:, 13]  # Needs mapping for ICD-10
-        encounters['Principal Diagnosis'] = mappings.snomedicdbasicmap(encounters.iloc[:, 13])
-        encounters['Total Charges'] = encounters.iloc[:, 11].apply(lambda x: str(min(int(x.split('.')[0]), 9999999)))
-        print('SUB-CHECK - Encounters Shape: ', encounters.shape)
-
-        # Prepare and merge organizations name as Facility Name (replace IDs with real names) into encounters
-        organizations = self.synthea_output.organizations_df()
-        organizations['organization_id'] = organizations.iloc[:, 0]
-        organizations['Facility Name'] = organizations.iloc[:, 1]
-        encounters = encounters.merge(organizations[['organization_id', 'Facility Name']], how='left',
-                                      left_on='organization_id', right_on='organization_id')
-        print('SUB-CHECK - Facility Name merged.  Encounters Shape: ', encounters.shape)
-
-        # Prepare and merge payers info (replace IDs with real payer data) into encounters
-        payers = self.synthea_output.payers_df()
-        payers['payer_id'] = payers.iloc[:, 0]
-        payers['Payer Category'] = payers.apply(mappings.payer_category, axis=1).astype(str)
-        encounters = encounters.merge(payers[['payer_id', 'Payer Category']], how='left', left_on='payer_id',
-                                      right_on='payer_id')
-        print('SUB-CHECK - Payers and codes merged.  Encounters Shape: ', encounters.shape)
-
-        # Merge the encounters dataframe into self.output_df, keeping only the fields we care about
-        self.output_df = self.output_df.merge(encounters[['encounter_id', 'Admission Date', 'Discharge Date',
-                                                          'Principal Diagnosis', 'Total Charges', 'Payer Category',
-                                                          'Facility Name']],
-                                              how='left', left_on='patient_id', right_on=encounters.iloc[:, 3])
-        print('Encounter info added.  Shape: ', self.output_df.shape)
-        self.output_df = self.output_df.dropna(subset=['encounter_id']).reset_index(drop=True)
-        print('Patients with no encounters of desired type dropped.  Shape: ', self.output_df.shape)
-        del encounters
+    @abstractmethod
+    def add_encounters(self) -> pd.DataFrame:
+        pass
 
     def add_procedures(self):
         procedures = self.synthea_output.procedures_df(subfields=[0, 3, 4])
