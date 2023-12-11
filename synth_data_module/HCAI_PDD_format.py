@@ -12,6 +12,8 @@ class HCAIPDDFormat(HCAIBase):
         procedure_list = get_procedure_list()
         diagnosis_list = get_diagnosis_list(length=8)
         morbidity_list = get_morbidity_list()
+
+        # Define the fields we will care about
         self.fields_dict = (
                 [{'fieldid': 'typcare', 'name': 'Type of Care', 'length': 1},
                  {'fieldid': 'oshpd_id', 'name': 'Facility Identification Number', 'length': 6},

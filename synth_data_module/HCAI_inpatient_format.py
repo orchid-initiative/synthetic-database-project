@@ -10,7 +10,8 @@ class HCAIInpatientFormat(HCAIBase):
         super().__init__(**kwargs)
 
         procedure_list = get_procedure_list()
-        diagnosis_list = get_diagnosis_list(length=7)\
+        diagnosis_list = get_diagnosis_list(length=7)
+
         # Define the fields we will care about
         self.fields_dict = (
                 [{'name': 'Type of Care', 'length': 1, 'justification': 'left'},
@@ -60,7 +61,7 @@ class HCAIInpatientFormat(HCAIBase):
             self.all_fields[self.all_fields['name'].isin(self.exclude_columns)].index)
 
     def suggested_filename(self) -> str:
-        if "CSV" in self.args_dict['FormatType']:
+        if "CSV" in self.kwargs['FormatType']:
             ftype = "csv"
             fextension = "csv"
         else:
@@ -70,15 +71,14 @@ class HCAIInpatientFormat(HCAIBase):
         return f'{self.synthea_output.output_loc}/formatted_data/HCAIInpatient/{ftype}_HCAIInpatient_' \
                f'{date_time.strftime("%m-%d-%Y_%H%M")}.{fextension}'
 
-
     def add_encounters(self):
         encounters = self.synthea_output.encounters_df()
         encounters['encounter_id'] = encounters.iloc[:, 0]
         encounters['organization_id'] = encounters.iloc[:, 4]
         encounters['payer_id'] = encounters.iloc[:, 6]
         encounters['EncounterClass'] = encounters.iloc[:, 7]
-        if self.args_dict['EncounterType']:
-            encounters = encounters.loc[encounters['EncounterClass'] == self.args_dict['EncounterType'], :].copy()
+        if self.kwargs['EncounterType']:
+            encounters = encounters.loc[encounters['EncounterClass'] == self.kwargs['EncounterType'], :].copy()
 
         # We had some issues getting the date format correct if headers were used in synthea, this try/except handles
         # both cases more smoothly now
