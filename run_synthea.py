@@ -42,18 +42,18 @@ def main():
     log.setSysOut(f'logs/{__file__}_{dt.date.today()}.log')
 
     # Generate patient data
-    generate_synthea_patients(args_dict, city, state)
+    generate_synthea_patients(city, state, **args_dict)
 
     # Format patient data
-    format_data(**args_dict)
+    report_data(**args_dict)
 
     # Timekeeping stats
     log.printSectionSubHeader('Total Elapsed Time')
     log.printElapsedTime(start)
 
 
-def generate_synthea_patients(args, city, state):
-    if args['FormatOnly']:
+def generate_synthea_patients(city, state, **kwargs):
+    if kwargs['FormatOnly']:
         return
 
     # Identify the path for the synthea java jar - it should be in the same folder as this script.  Initialize Synthea
@@ -73,14 +73,14 @@ def generate_synthea_patients(args, city, state):
     # Collect Patients
     log.printSectionSubHeader('Creating Patient Records')
     synth_start = time.time()
-    synthea.specify_popsize(size=args.PersonCount)
-    synthea.specify_gender(gender=args.Gender)
+    synthea.specify_popsize(size=kwargs['PersonCount'])
+    synthea.specify_gender(gender=kwargs['Gender'])
     synthea.specify_city(state, city)
     synthea.run_synthea()
     log.printElapsedTime(synth_start, "Patients created in: ")
 
 
-def format_data(**kwargs):
+def report_data(**kwargs):
     if kwargs['SyntheaGenOnly']:
         return
     # Format data to our desired layout

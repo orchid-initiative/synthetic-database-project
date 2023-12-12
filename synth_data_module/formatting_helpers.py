@@ -30,14 +30,18 @@ def get_procedure_list():
     procedure_list = []
     for i in range(1, 26):
         if i == 1:
-            code = {'name': f'Principal Procedure Code', 'length': 7, 'justification': 'left'}
+            code = {'fieldid': 'proc_p', 'name': f'Principal Procedure Code', 'length': 7, 'justification': 'left'}
             procedure_list.append(code)
-            date = {'name': f'Principal Procedure Date', 'length': 8, 'justification': 'left'}
+            date = {'fieldid': 'proc_pdt', 'name': f'Principal Procedure Date', 'length': 8, 'justification': 'left'}
+            procedure_list.append(date)
+            date = {'fieldid': 'proc_pdy', 'name': f'Principal Procedure Days', 'length': 8, 'justification': 'left'}
             procedure_list.append(date)
         else:
-            code = {'name': f'Procedure Code {i}', 'length': 7, 'justification': 'left'}
+            code = {'fieldid': f'oproc{i}', 'name': f'Procedure Code {i}', 'length': 7, 'justification': 'left'}
             procedure_list.append(code)
-            date = {'name': f'Procedure Date {i}', 'length': 8, 'justification': 'left'}
+            date = {'fieldid': f'procdt{i}', 'name': f'Procedure Date {i}', 'length': 8, 'justification': 'left'}
+            procedure_list.append(date)
+            date = {'fieldid': f'procdy{i}', 'name': f'Procedure Days {i}', 'length': 8, 'justification': 'left'}
             procedure_list.append(date)
 
     return procedure_list

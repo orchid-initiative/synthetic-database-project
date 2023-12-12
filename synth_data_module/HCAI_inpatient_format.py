@@ -1,9 +1,10 @@
 import datetime as dt
 from synth_data_module import HCAIBase, get_procedure_list, get_diagnosis_list
 import pandas as pd
+import numpy as np
 import synth_data_module.mappings as mappings
 import time
-
+from io import StringIO
 
 class HCAIInpatientFormat(HCAIBase):
     def __init__(self, **kwargs):
@@ -70,6 +71,38 @@ class HCAIInpatientFormat(HCAIBase):
         date_time = dt.datetime.fromtimestamp(time.time())
         return f'{self.synthea_output.output_loc}/formatted_data/HCAIInpatient/{ftype}_HCAIInpatient_' \
                f'{date_time.strftime("%m-%d-%Y_%H%M")}.{fextension}'
+
+    def format_data(self):
+        # StringIO acts like a file object, but collects its output in
+        # a string instead of writing to a file.
+        sbuffer = StringIO()
+        df = self.output_df.copy()
+
+        # CSV data formatting
+        if "CSV" in self.kwargs['FormatType']:
+            if self.kwargs['Verbose']:
+                df[self.all_fields['name'].tolist()].to_csv(sbuffer, index=False)
+            else:
+                df[self.final_fields['name'].tolist()].to_csv(sbuffer, index=False)
+
+        # Fixed width data formatting
+        else:
+            df = df[self.final_fields['name'].tolist()]
+            # Force left/right justification, min/max length and string type for each column and
+            # keep a list of this format for all our columns
+            formats = []
+            for length, justification in zip(self.final_fields.length, self.final_fields.justification):
+                if justification == 'left':
+                    justchar = '-'
+                else:
+                    justchar = ''
+                fmt = f'%{justchar}{length}.{length}s'
+                formats += [fmt]
+            df.fillna('', inplace=True)
+            np.savetxt(sbuffer, df, fmt=formats, delimiter='')
+
+        # getvalue() returns the string built up inside of the StringIO.
+        return sbuffer.getvalue()
 
     def add_encounters(self):
         encounters = self.synthea_output.encounters_df()

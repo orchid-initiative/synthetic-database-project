@@ -5,7 +5,7 @@ import datetime as dt
 import pandas as pd
 import numpy as np
 import synth_data_module.mappings as mappings
-from io import StringIO
+
 
 
 class HCAIBase(Formatter, ABC):
@@ -31,38 +31,6 @@ class HCAIBase(Formatter, ABC):
         self.add_other_diagnosis()
         self.hard_coding()
         self.fill_missing()
-
-    def format_data(self):
-        # StringIO acts like a file object, but collects its output in
-        # a string instead of writing to a file.
-        sbuffer = StringIO()
-        df = self.output_df.copy()
-
-        # CSV data formatting
-        if "CSV" in self.kwargs['FormatType']:
-            if self.kwargs['Verbose']:
-                df[self.all_fields['name'].tolist()].to_csv(sbuffer, index=False)
-            else:
-                df[self.final_fields['name'].tolist()].to_csv(sbuffer, index=False)
-
-        # Fixed width data formatting
-        else:
-            df = df[self.final_fields['name'].tolist()]
-            # Force left/right justification, min/max length and string type for each column and
-            # keep a list of this format for all our columns
-            formats = []
-            for length, justification in zip(self.final_fields.length, self.final_fields.justification):
-                if justification == 'left':
-                    justchar = '-'
-                else:
-                    justchar = ''
-                fmt = f'%{justchar}{length}.{length}s'
-                formats += [fmt]
-            df.fillna('', inplace=True)
-            np.savetxt(sbuffer, df, fmt=formats, delimiter='')
-
-        # getvalue() returns the string built up inside of the StringIO.
-        return sbuffer.getvalue()
 
     def write_data(self, data, filename=None):
         with open(filename or self.suggested_filename(), "w") as f:

@@ -3,6 +3,7 @@ from synth_data_module import HCAIBase, get_procedure_list, get_diagnosis_list, 
 import pandas as pd
 import synth_data_module.mappings as mappings
 import time
+from io import StringIO
 
 
 class HCAIPDDFormat(HCAIBase):
@@ -22,7 +23,6 @@ class HCAIPDDFormat(HCAIBase):
                  {'fieldid': 'hplcnty', 'name': 'Hospital County', 'length': 2},  # NeedToDo
                  {'fieldid': 'data_id', 'name': 'Data Set Identification Number', 'length': 10},  # NeedToDo
                  {'fieldid': 'pat_id', 'name': 'Patient Identification Number', 'length': 12},  # NeedToDo
-#                {'fieldid': '', 'name': 'Facility Name', 'length': 0},
                  {'fieldid': 'bthdate', 'name': 'Date of Birth', 'length': 8},
                  {'fieldid': 'dob_raw', 'name': 'Date of Birth Raw', 'length': 8},
                  {'fieldid': 'agdyadm', 'name': 'Age in Days at Admission', 'length': 8},  # NeedToDo
@@ -46,7 +46,6 @@ class HCAIPDDFormat(HCAIBase):
                  {'fieldid': 'race_white', 'name': 'Race White', 'length': 1},  # NeedToDo
                  {'fieldid': 'race_other', 'name': 'Race Other', 'length': 1},  # NeedToDo
                  {'fieldid': 'race_grp', 'name': 'Normalized Ethnicity', 'length': 1},  # NeedToDo
-                 {'fieldid': '', 'name': 'Not in Use 1', 'length': 5},
                  {'fieldid': 'admtdate', 'name': 'Admission Date', 'length': 8},
                  {'fieldid': 'admtday', 'name': 'Admission Day of the Week', 'length': 1},
                  {'fieldid': 'admtmth', 'name': 'Admission Month', 'length': 2},
@@ -69,16 +68,10 @@ class HCAIPDDFormat(HCAIBase):
                  {'fieldid': 'grouper', 'name': 'MS-DRG Grouper Version', 'length': 4},  # NeedToDo
                  {'fieldid': 'diag_p', 'name': 'Principal Diagnosis', 'length': 8},
                  {'fieldid': 'poa_p', 'name': 'Present on Admission for Principal Diagnosis', 'length': 1}]
-                + diagnosis_list +
-                [{'fieldid': '', 'name': 'Diagnosis Codes', 'length': 250},
-                 {'fieldid': '', 'name': 'Present on Admission', 'length': 100}]
-                + procedure_list +
-                [{'fieldid': '', 'name': 'Procedure Codes', 'length': 375},
-                 {'fieldid': '', 'name': 'Procedure Dates', 'length': 375}]
+                + diagnosis_list
+                + procedure_list
                 + morbidity_list +
-                [{'fieldid': '', 'name': 'External Causes of Morbidity and Present on Admission', 'length': 96,
-                  'justification': 'left'},
-                 {'fieldid': 'ssn', 'name': 'Social Security Number', 'length': 9},
+                [{'fieldid': 'ssn', 'name': 'Social Security Number', 'length': 9},
                  {'fieldid': 'rln', 'name': 'Record Linkage Number', 'length': 9},
                  {'fieldid': 'disp', 'name': 'Disposition of Patient', 'length': 2},
                  {'fieldid': 'charge', 'name': 'Total Charges', 'length': 8},
@@ -90,14 +83,8 @@ class HCAIPDDFormat(HCAIBase):
                  {'fieldid': 'pay_plan', 'name': 'Plan Code Number', 'length': 4},
                  {'fieldid': 'pls_abbr', 'name': 'Preferred Language Spoken', 'length': 3},
                  {'fieldid': 'pls_wrtin', 'name': 'Preferred Language Spoken Write In', 'length': 24},
-                 {'fieldid': '', 'name': 'Patient Address - Address Number and Street Name', 'length': 40},
-                 {'fieldid': '', 'name': 'Patient Address - City', 'length': 30},
-                 {'fieldid': 'patcnty', 'name': 'Patient Address - County', 'length': 2},  # NeedToDo
-                 {'fieldid': '', 'name': 'Patient Address - State', 'length': 2},
+                 {'fieldid': 'patcnty', 'name': 'Patient County', 'length': 2},  # NeedToDo
                  {'fieldid': 'patzip', 'name': 'Patient Address - Zip Code', 'length': 5},
-                 {'fieldid': '', 'name': 'Patient Address - Country Code', 'length': 2},
-                 {'fieldid': '', 'name': 'Patient Address - Homeless Indicator', 'length': 1},
-                 {'fieldid': '', 'name': 'Not in Use 2', 'length': 356}
                  ])
         self.exclude_columns = ['Facility Name', 'Procedure Codes', 'Procedure Dates', 'Diagnosis Codes',
                                 'Present on Admission']
@@ -115,6 +102,18 @@ class HCAIPDDFormat(HCAIBase):
         date_time = dt.datetime.fromtimestamp(time.time())
         return f'{self.synthea_output.output_loc}/formatted_data/HCAIPDD/{ftype}_HCAIPDD_' \
                f'{date_time.strftime("%m-%d-%Y_%H%M")}.{fextension}'
+
+    def format_data(self):
+        # StringIO acts like a file object, but collects its output in
+        # a string instead of writing to a file.
+        sbuffer = StringIO()
+        df = self.output_df.copy()
+        if self.kwargs['Verbose']:
+            df[self.final_fields['name'].tolist()].to_csv(sbuffer, index=False)
+        else:
+            df.rename(columns=dict(zip(self.all_fields["name"], self.all_fields["fieldid"])), inplace=True)
+            df[self.final_fields['fieldid'].tolist()].to_csv(sbuffer, index=False)
+        return sbuffer.getvalue()
 
     def add_encounters(self):
         encounters = self.synthea_output.encounters_df()
