@@ -41,7 +41,7 @@ class HCAIInpatientFormat(HCAIBase):
                  {'name': 'Patient SSN', 'length': 9, 'justification': 'left'},
                  {'name': 'Disposition of Patient', 'length': 2, 'justification': 'left'},
                  {'name': 'Total Charges', 'length': 8, 'justification': 'right'},
-                 {'name': 'Abstract Record Number (Optional)', 'length': 12, 'justification': 'left'},
+                 {'name': 'Abstract Record Number', 'length': 12, 'justification': 'left'},
                  {'name': 'Prehospital Care & Resuscitation - DNR Order', 'length': 2, 'justification': 'left'},
                  {'name': 'Payer Category', 'length': 2, 'justification': 'left'},
                  {'name': 'Type of Coverage', 'length': 1, 'justification': 'left'},

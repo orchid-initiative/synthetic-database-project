@@ -1,5 +1,5 @@
 import datetime as dt
-from synth_data_module import HCAIBase, get_procedure_list, get_diagnosis_list, get_morbidity_list
+from synth_data_module import HCAIBase, get_procedure_list, get_diagnosis_list, get_morbidity_list, calculate_age
 import pandas as pd
 import synth_data_module.mappings as mappings
 import time
@@ -17,21 +17,21 @@ class HCAIPDDFormat(HCAIBase):
         # Define the fields we will care about
         self.fields_dict = (
                 [{'fieldid': 'typcare', 'name': 'Type of Care', 'length': 1},
-                 {'fieldid': 'oshpd_id', 'name': 'Facility Identification Number', 'length': 6},
+                 {'fieldid': 'oshpd_id', 'name': 'Facility Identification Number', 'length': 6},  # NeedToFix
                  {'fieldid': 'oshpd_id9', 'name': 'Facility Identification Number Long', 'length': 9},  # NeedToDo
-                 {'fieldid': 'hplzip', 'name': 'Hospital Zip Code', 'length': 5},  # NeedToDo
-                 {'fieldid': 'hplcnty', 'name': 'Hospital County', 'length': 2},  # NeedToDo
-                 {'fieldid': 'data_id', 'name': 'Data Set Identification Number', 'length': 10},  # NeedToDo
-                 {'fieldid': 'pat_id', 'name': 'Patient Identification Number', 'length': 12},  # NeedToDo
+                 {'fieldid': 'hplzip', 'name': 'Hospital Zip Code', 'length': 5},
+                 {'fieldid': 'hplcnty', 'name': 'Hospital County', 'length': 2},
+                 {'fieldid': 'data_id', 'name': 'Data Set Identification Number', 'length': 10},
+                 {'fieldid': 'pat_id', 'name': 'Patient Identification Number', 'length': 12},
                  {'fieldid': 'bthdate', 'name': 'Date of Birth', 'length': 8},
                  {'fieldid': 'dob_raw', 'name': 'Date of Birth Raw', 'length': 8},
-                 {'fieldid': 'agdyadm', 'name': 'Age in Days at Admission', 'length': 8},  # NeedToDo
-                 {'fieldid': 'agdydsch', 'name': 'Age in Days at Discharge', 'length': 8},  # NeedToDo
-                 {'fieldid': 'agyradm', 'name': 'Age in Years at Admission', 'length': 8},  # NeedToDo
-                 {'fieldid': 'agyrdsch', 'name': 'Age in Years at Discharge', 'length': 8},  # NeedToDo
-                 {'fieldid': 'agecatadm', 'name': 'Age Range at Admission', 'length': 2},  # NeedToDo
-                 {'fieldid': 'agecatdsch', 'name': 'Age Range at Discharge', 'length': 2},  # NeedToDo
-                 {'fieldid': 'agecatdsch10', 'name': 'Age in Years at Discharge 10', 'length': 2},  # NeedToDo
+                 {'fieldid': 'agdyadm', 'name': 'Age in Days at Admission', 'length': 8},
+                 {'fieldid': 'agdydsch', 'name': 'Age in Days at Discharge', 'length': 8},
+                 {'fieldid': 'agyradm', 'name': 'Age in Years at Admission', 'length': 8},
+                 {'fieldid': 'agyrdsch', 'name': 'Age in Years at Discharge', 'length': 8},
+                 {'fieldid': 'agecatadm', 'name': 'Age Range at Admission', 'length': 2},
+                 {'fieldid': 'agecatdsch', 'name': 'Age Range at Discharge', 'length': 2},
+                 {'fieldid': 'agecatdsch10', 'name': 'Age in Years at Discharge 10', 'length': 2},
                  {'fieldid': 'sex', 'name': 'Sex', 'length': 1},
                  {'fieldid': 'ethncty', 'name': 'Ethnicity', 'length': 2},
                  {'fieldid': 'race1', 'name': 'Race', 'length': 2},
@@ -55,9 +55,9 @@ class HCAIPDDFormat(HCAIBase):
                  {'fieldid': 'mth_dsch', 'name': 'Discharge Month', 'length': 2},
                  {'fieldid': 'qtr_dsch', 'name': 'Discharge Quarter', 'length': 1},
                  {'fieldid': 'dsch_yr', 'name': 'Discharge Year', 'length': 4},
-                 {'fieldid': 'counter', 'name': 'Counter', 'length': 8},  # NeedToDo
-                 {'fieldid': 'los', 'name': 'Length Of Stay', 'length': 8},  # NeedToDo
-                 {'fieldid': 'los_adj', 'name': 'Adjusted Length of Stay', 'length': 8},  # NeedToDo
+                 {'fieldid': 'counter', 'name': 'Counter', 'length': 8},
+                 {'fieldid': 'los', 'name': 'Length Of Stay', 'length': 8},
+                 {'fieldid': 'los_adj', 'name': 'Adjusted Length of Stay', 'length': 8},
                  {'fieldid': 'srcpo_ns', 'name': 'Point of Origin', 'length': 1},
                  {'fieldid': 'srcroute_ns', 'name': 'Route of Admission', 'length': 1},
                  {'fieldid': 'admtype_ns', 'name': 'Type of Admission', 'length': 1},
@@ -72,21 +72,21 @@ class HCAIPDDFormat(HCAIBase):
                 + procedure_list
                 + morbidity_list +
                 [{'fieldid': 'ssn', 'name': 'Social Security Number', 'length': 9},
-                 {'fieldid': 'rln', 'name': 'Record Linkage Number', 'length': 9},
+                 {'fieldid': 'rln', 'name': 'Record Linkage Number', 'length': 9},  # Set to SSN
                  {'fieldid': 'disp', 'name': 'Disposition of Patient', 'length': 2},
                  {'fieldid': 'charge', 'name': 'Total Charges', 'length': 8},
-                 {'fieldid': 'charge_adj', 'name': 'Total Charges Adjusted', 'length': 8},  # NeedToDo
-                 {'fieldid': 'abstrec', 'name': 'Abstract Record Number', 'length': 12},
+                 {'fieldid': 'charge_adj', 'name': 'Total Charges Adjusted', 'length': 8},  # Set to Total Charges
+                 {'fieldid': 'abstrec', 'name': 'Abstract Record Number', 'length': 12},  # Set to SSN
                  {'fieldid': 'dnr', 'name': 'Prehospital Care & Resuscitation - DNR Order', 'length': 1},
                  {'fieldid': 'pay_cat', 'name': 'Payer Category', 'length': 2},
                  {'fieldid': 'pay_type', 'name': 'Type of Coverage', 'length': 1},
                  {'fieldid': 'pay_plan', 'name': 'Plan Code Number', 'length': 4},
                  {'fieldid': 'pls_abbr', 'name': 'Preferred Language Spoken', 'length': 3},
                  {'fieldid': 'pls_wrtin', 'name': 'Preferred Language Spoken Write In', 'length': 24},
-                 {'fieldid': 'patcnty', 'name': 'Patient County', 'length': 2},  # NeedToDo
+                 {'fieldid': 'patcnty', 'name': 'Patient Address - County', 'length': 2},
                  {'fieldid': 'patzip', 'name': 'Patient Address - Zip Code', 'length': 5},
                  ])
-        self.exclude_columns = ['Facility Name', 'Procedure Codes', 'Procedure Dates', 'Diagnosis Codes',
+        self.exclude_columns = ['Procedure Codes', 'Procedure Dates', 'Diagnosis Codes',
                                 'Present on Admission']
         self.all_fields = pd.DataFrame.from_dict(self.fields_dict)
         self.final_fields = self.all_fields.drop(
@@ -150,15 +150,19 @@ class HCAIPDDFormat(HCAIBase):
         # encounters['Principal Diagnosis'] = encounters.iloc[:, 13]  # Needs mapping for ICD-10
         encounters['Principal Diagnosis'] = mappings.snomedicdbasicmap(encounters.iloc[:, 13])
         encounters['Total Charges'] = encounters.iloc[:, 11].apply(lambda x: str(min(int(x.split('.')[0]), 9999999)))
+        encounters['Total Charges Adjusted'] = encounters.iloc[:, 11].apply(lambda x: str(min(int(x.split('.')[0]), 9999999)))
         print('SUB-CHECK - Encounters Shape: ', encounters.shape)
 
         # Prepare and merge organizations name as Facility Name (replace IDs with real names) into encounters
         organizations = self.synthea_output.organizations_df()
         organizations['organization_id'] = organizations.iloc[:, 0]
-        organizations['Facility Name'] = organizations.iloc[:, 1]
-        encounters = encounters.merge(organizations[['organization_id', 'Facility Name']], how='left',
+        organizations['Hospital County'] = mappings.CAcity(organizations.iloc[:, 3])
+        print(organizations.iloc[:, 3])
+        print(organizations['Hospital County'])
+        organizations['Hospital Zip Code'] = organizations.iloc[:, 5].apply(lambda x: x[:5])
+        encounters = encounters.merge(organizations[['organization_id', 'Hospital County', 'Hospital Zip Code']], how='left',
                                       left_on='organization_id', right_on='organization_id')
-        print('SUB-CHECK - Facility Name merged.  Encounters Shape: ', encounters.shape)
+        print('SUB-CHECK - Facility  merged.  Encounters Shape: ', encounters.shape)
 
         # Prepare and merge payers info (replace IDs with real payer data) into encounters
         payers = self.synthea_output.payers_df()
@@ -172,9 +176,31 @@ class HCAIPDDFormat(HCAIBase):
         self.output_df = self.output_df.merge(encounters[[
             'encounter_id', 'Admission Date', 'Admission Day of the Week', 'Admission Month', 'Admission Quarter',
             'Admission Year', 'Discharge Date', 'Discharge Month', 'Discharge Quarter', 'Discharge Year',
-            'Principal Diagnosis', 'Total Charges', 'Payer Category', 'Facility Name']],
+            'Principal Diagnosis', 'Total Charges', 'Total Charges Adjusted', 'Payer Category', 'Hospital County',
+            'Hospital Zip Code']],
             how='left', left_on='patient_id', right_on=encounters.iloc[:, 3])
         print('Encounter info added.  Shape: ', self.output_df.shape)
         self.output_df = self.output_df.dropna(subset=['encounter_id']).reset_index(drop=True)
         print('Patients with no encounters of desired type dropped.  Shape: ', self.output_df.shape)
+
+        self.output_df['Age in Days at Admission'] = self.output_df.apply(
+            lambda x: calculate_age(x['Date of Birth'], x['Admission Date'], "agedays"), axis=1)
+        self.output_df['Age in Days at Discharge'] = self.output_df.apply(
+            lambda x: calculate_age(x['Date of Birth'], x['Discharge Date'], "agedays"), axis=1)
+        self.output_df['Age in Years at Admission'] = self.output_df.apply(
+            lambda x: calculate_age(x['Date of Birth'], x['Admission Date'], "years"), axis=1)
+        self.output_df['Age in Years at Discharge'] = self.output_df.apply(
+            lambda x: calculate_age(x['Date of Birth'], x['Discharge Date'], "years"), axis=1)
+        self.output_df['Age Range at Admission'] = self.output_df.apply(
+            lambda x: calculate_age(x['Date of Birth'], x['Admission Date'], "range5"), axis=1)
+        self.output_df['Age Range at Discharge'] = self.output_df.apply(
+            lambda x: calculate_age(x['Date of Birth'], x['Discharge Date'], "range5"), axis=1)
+        self.output_df['Age in Years at Discharge 10'] = self.output_df.apply(
+            lambda x: calculate_age(x['Date of Birth'], x['Discharge Date'], "range10"), axis=1)
+        self.output_df['Length Of Stay'] = self.output_df.apply(
+            lambda x: calculate_age(x['Admission Date'], x['Discharge Date'], "staydays"), axis=1)
+        self.output_df['Adjusted Length Of Stay'] = self.output_df.apply(
+            lambda x: calculate_age(x['Admission Date'], x['Discharge Date'], "adjstaydays"), axis=1)
+        print('Added age and duration statistics for admission and discharge.  Shape: ', self.output_df.shape)
+
         del encounters

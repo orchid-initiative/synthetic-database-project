@@ -1,7 +1,8 @@
 import glob
 import os
+import math
 from abc import ABC, abstractmethod
-
+from dateutil.relativedelta import relativedelta
 import pandas as pd
 
 
@@ -87,6 +88,32 @@ def modify_row(row, df_fields, new_fields):
                     row[f'{new_fields[0]} {i}'] = code
                     row[f'{new_fields[1]} {i}'] = date
     return row
+
+# HCAI has specific criteria for age reporting
+def calculate_age(x, y, form="agedays"):
+    try:
+        date1 = pd.to_datetime(x, format='%m%d%Y')
+        date2 = pd.to_datetime(y, format='%m%d%Y')
+        agedays = date2-date1
+        age = relativedelta(date2, date1)
+    except:
+        return " "
+    # Days are only reported as a field if the patient is under 1 years old, else reported as "0"
+    if form == "agedays":
+        if agedays.days < 366:
+            return max(agedays.days, 1)
+        else:
+            return 0
+    if form == "staydays":
+        return agedays.days
+    elif form == 'adjstaydays':
+        return max(agedays.days, 1)
+    elif form == 'years':
+        return age.years
+    elif form == 'range5':
+        return str(math.ceil((age.years+1)/5)+math.ceil(1*(age.years/(age.years+1)))).zfill(2)
+    elif form == 'range10':
+        return str(math.ceil((age.years+1)/10)+math.ceil(1*(age.years/(age.years+1)))).zfill(2)
 
 
 # Functions for maintaining data outputs and processing arguments for runtime

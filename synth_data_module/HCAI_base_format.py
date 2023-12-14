@@ -52,15 +52,18 @@ class HCAIBase(Formatter, ABC):
         patients['Race'] = mappings.race(patients.iloc[:, 12])
         patients['Social Security Number'] = patients.iloc[:, 3].fillna('000000001').apply(lambda x: x.replace('-', ''))
         patients['Record Linkage Number'] = patients.iloc[:, 3].fillna('000000001').apply(lambda x: x.replace('-', ''))
+        patients['Abstract Record Number'] = patients.iloc[:, 3].fillna('000000001')
         patients['Patient Address - Address Number and Street Name'] = patients.iloc[:, 16]
         patients['Patient Address - City'] = patients.iloc[:, 17]
         patients['Patient Address - State'] = patients.iloc[:, 18]
+        patients['Patient Address - County'] = mappings.CAcounty(patients.iloc[:, 19])
         patients['Patient Address - Zip Code'] = patients.iloc[:, 21].fillna('XXXXX')
         patients['Patient Address - Country Code'] = self.country_code
         self.output_df = patients[['patient_id', 'Date of Birth', 'Date of Birth Raw', 'Sex', 'Ethnicity', 'Race',
-                                   'Social Security Number', 'Record Linkage Number', 'Patient Address - Address Number and Street Name',
-                                   'Patient Address - City', 'Patient Address - State',
-                                   'Patient Address - Zip Code', 'Patient Address - Country Code']]
+                                   'Social Security Number', 'Record Linkage Number', 'Abstract Record Number',
+                                   'Patient Address - Address Number and Street Name', 'Patient Address - City',
+                                   'Patient Address - State', 'Patient Address - County', 'Patient Address - Zip Code',
+                                   'Patient Address - Country Code']]
         print('Demographics added.  Shape: ', self.output_df.shape)
         del patients
 
@@ -160,8 +163,20 @@ class HCAIBase(Formatter, ABC):
         self.output_df = pd.concat([self.output_df, dnr_s.rename('Prehospital Care & Resuscitation - DNR Order')],
                                    axis=1)
 
-        arn_s = pd.Series(np.arange(1, len(self.output_df) + 1))
-        self.output_df = pd.concat([self.output_df, arn_s.rename('Abstract Record Number (Optional)')], axis=1)
+        # The patients are already processed in order, so we can go through them and count unique SSNs to assign an ID
+        result_series = pd.Series(0, index=range(len(self.output_df)))
+        for i in range(len(self.output_df)):
+            subset_series = self.output_df['Social Security Number'].iloc[:i + 1]
+            unique_count = 100000000000 + subset_series.nunique()
+            result_series.iloc[i] = unique_count
+        self.output_df['Patient Identification Number'] = result_series
+
+        dsi_s = pd.Series(np.arange(1000000001, len(self.output_df) + 1000000001))
+        self.output_df = pd.concat([self.output_df, dsi_s.rename('Data Set Identification Number')], axis=1)
+
+        count_s = pd.Series(np.arange(1, len(self.output_df) + 1))
+        self.output_df = pd.concat([self.output_df, count_s.rename('Counter')], axis=1)
+
         print('Hard-coded fields added.  Shape: ', self.output_df.shape)
 
     def fill_missing(self):
