@@ -1,4 +1,4 @@
-from synth_data_module import Synthea, FormatOutput, clear_old_files
+from synth_data_module import Synthea, create_formatter, clear_old_files, parse_city
 from log_helpers import log_helpers as log
 import time
 import os
@@ -9,81 +9,97 @@ import argparse
 def parse_arguments():
     # Initialize parser
     parser = argparse.ArgumentParser()
-    parser.add_argument('-T', '--Type', help='Specify Encounter Type',
+    parser.add_argument('-T', '--EncounterType', help='Specify Encounter Type',
                         choices=['inpatient', 'outpatient', 'ambulatory', 'wellness', 'virtual', 'urgentcare',
                                  'emergency'], default='inpatient')
-    parser.add_argument('-C', '--SpecifyCity', help='Specify the City, State for the synthea location', default=False)
+    parser.add_argument('-C', '--City', help='Specify the City, State for the synthea location', default=None)
+    parser.add_argument('-G', '--Gender', help='Specify the gender of patients',
+                        choices=['M', 'F'], default=False)
+    parser.add_argument('-N', '--PersonCount', help='Number of patients', type=int, metavar="[1-5000]",
+                        choices=range(1, 5000), default=100)
+    parser.add_argument('-O', '--FormatType', help='Specify the type of output',
+                        choices=['HCAI_Inpatient_CSV', 'HCAI_Inpatient_FW', 'HCAI_PDD_CSV', 'HCAI_PDD_SAS', "all"],
+                        default="all")
+    parser.add_argument('-ID', '--FacilityID', help='Specify the Facility ID to tag', default='010735')
+    parser.add_argument('-V', '--Verbose', help='Include additional fields, not part of offical outputs', default=False)
+
+    # Add arguments that allow reports to be generated on a yearly basis.  To avoid excess files, add date restriction
+    group1 = parser.add_argument_group()
+    parser.add_argument('-Y', '--Yearly', help='Separate the output by year', default=False)
+    parser.add_argument('-R', '--YearRange', help='Restrict output to certain years', default=False)
+
     # Add an argument to just run formatting code (i.e. bypass running synthea again and do not delete output/ files)
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('-F', '--FormatOnly', help='Only Run Formatting code', action='store_true', default=False)
-    group.add_argument('-D', '--SyntheaGenOnly', help='Only Run Synthea Data Generation, not Formatting',
-                       action='store_true', default=False)
+    group2 = parser.add_mutually_exclusive_group()
+    group2.add_argument('-F', '--FormatOnly', help='Only Run Formatting code', action='store_true', default=False)
+    group2.add_argument('-D', '--SyntheaGenOnly', help='Only Run Synthea Data Generation, not Formatting',
+                        action='store_true', default=False)
     args = parser.parse_args()
+    if args.Yearly and args.YearRange is None:
+        parser.error("--Yearly requires --YearRange")
+
     return args
 
 
 def main():
     start = time.time()
-    args = parse_arguments()
-    if args.SpecifyCity:
-        if len(args.SpecifyCity.split(",")) == 2:
-            city = str(args.SpecifyCity.split(",")[0])
-            state = str(args.SpecifyCity.split(",")[1])
-            print("Overriding default location Massachusetts to city, state: %s, %s " % (city, state))
-        else:
-            city = None
-            state = str(args.SpecifyCity.split(",")[0])
-            print("Overriding default location Massachusetts to state %s " % state)
+    args_dict = vars(parse_arguments())
 
+    # Call this first to provide some command line feedback to the user about location choices
+    city, state = parse_city(args_dict['City'])
+
+    # Divert remaining logs to a saved log file
     log.setSysOut(f'logs/{__file__}_{dt.date.today()}.log')
-    output_loc = 'output/'
-    encounter_type = args.Type
 
-    if not args.FormatOnly:
-        # Subsequent Synthea runs append data to the CSVs (this is a setting) so we clear out the past output at the
-        # start of each full run_synthea run - "formatted_data_DATETIME".csv is the only output persisting
-        log.printSectionHeader('Clearing Old Local Data')
-        clear_old_files()
+    # Generate patient data
+    generate_synthea_patients(city, state, **args_dict)
 
-        # Identify the path for the synthea java jar
-        file_path = os.path.realpath(__file__)
-        directory = os.path.dirname(file_path)
-        jar_file = os.path.join(directory, 'synthea-with-dependencies.jar')
+    # Format patient data
+    report_data(**args_dict)
 
-        # Run Synthea with global parameters and run-specific parameters
-        log.printSectionHeader('Running Synthea')
+    # Timekeeping stats
+    log.printSectionSubHeader('Total Elapsed Time')
+    log.printElapsedTime(start)
 
-        # TODO probably take out the M/F separation in favor of more general statistic seeking results
-        # Collect Females
-        log.printSectionSubHeader('Creating Female Records')
-        sub_start = time.time()
-        synthea = Synthea(jar_file, 'synthea_settings')  # initialize the module
-        synthea.specify_popsize(size=500)
-        synthea.specify_gender(gender='F')
-        if args.SpecifyCity:
-            synthea.specify_city(state, city)
-        synthea.run_synthea()
-        log.printElapsedTime(sub_start, "Females created in: ")
 
-        # Collect Males
-        log.printSectionSubHeader('Creating Male Records')
-        sub_start = time.time()
-        synthea = Synthea(jar_file, 'synthea_settings') # initialize the module
-        synthea.specify_popsize(size=500)
-        synthea.specify_gender(gender='M')
-        if args.SpecifyCity:
-            synthea.specify_city(state, city)
-        synthea.run_synthea()
-        log.printElapsedTime(sub_start, "Males created in: ")
+def generate_synthea_patients(city, state, **kwargs):
+    if kwargs['FormatOnly']:
+        return
 
+    # Identify the path for the synthea java jar - it should be in the same folder as this script.  Initialize Synthea
+    file_path = os.path.realpath(__file__)
+    directory = os.path.dirname(file_path)
+    jar_file = os.path.join(directory, 'synthea-with-dependencies.jar')
+    synthea = Synthea(jar_file, 'synthea_settings')  # initialize the module
+
+    # Subsequent Synthea runs append data to the CSVs (this is a setting) so we clear out the past output at the
+    # start of each full run_synthea run - "formatted_data_DATETIME".csv is the only output persisting
+    log.printSectionHeader('Clearing Old Local Data')
+    clear_old_files()
+
+    # Run Synthea with global parameters and run-specific parameters
+    log.printSectionHeader('Running Synthea')
+
+    # Collect Patients
+    log.printSectionSubHeader('Creating Patient Records')
+    synth_start = time.time()
+    synthea.specify_popsize(size=kwargs['PersonCount'])
+    synthea.specify_gender(gender=kwargs['Gender'])
+    synthea.specify_city(state, city)
+    synthea.run_synthea()
+    log.printElapsedTime(synth_start, "Patients created in: ")
+
+
+def report_data(**kwargs):
+    if kwargs['SyntheaGenOnly']:
+        return
     # Format data to our desired layout
     log.printSectionHeader('Formatting Data')
     form_start = time.time()
-    if not args.SyntheaGenOnly:
-        FormatOutput('010735', output_loc, encounter_type)
-        log.printElapsedTime(form_start, "Formatted output created in: ")
-    log.printSectionSubHeader('Total Elapsed Time')
-    log.printElapsedTime(start)
+    formatter = create_formatter(**kwargs)
+    formatter.gather_data()
+    data = formatter.format_data()
+    formatter.write_data(data)
+    log.printElapsedTime(form_start, "Formatted output created in: ")
 
 
 if __name__ == "__main__":
