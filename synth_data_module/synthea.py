@@ -30,6 +30,9 @@ class SyntheaOutput:
     def payers_df(self, subfields: list = None) -> pd.DataFrame:
         return pd.read_csv(f'{self.output_loc}/csv/payers.csv', dtype=str, parse_dates=[1, 2], header=0)
 
+    def observations_df(self, subfields: list = None) -> pd.DataFrame:
+        return pd.read_csv(f'{self.output_loc}/csv/observations.csv', dtype=str, header=0, usecols=subfields)
+
 
 class Synthea:
     # Intentionally using 2 spaces between args so they can be easily split later for passing into subprocess.Popen for
@@ -53,7 +56,6 @@ class Synthea:
             self.java_command = self.java_command + f'  {state}  {city}'
         elif state:
             self.java_command = self.java_command + f'  {state}'
-
 
     def run_synthea(self):
         # Split by double space to allow for multi-word city names (that are separated by 1 space).  It's very likely

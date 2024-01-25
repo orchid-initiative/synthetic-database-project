@@ -7,6 +7,11 @@ with open('synth_data_module/snomedbasicmappings.csv') as f:
     reader = csv.reader(f, skipinitialspace=True)
     snomeddict = dict(reader)
 
+with open('overrides/LARCStudyhospitals.csv') as f:
+    next(f)  # Skip the header
+    reader = csv.reader(f, skipinitialspace=True)
+    HCAImap = {rows[2]: rows[19] for rows in reader}
+
 
 def ethnicity(col):
     dic = {'hispanic': 'E1',
@@ -19,6 +24,14 @@ def gender(col):
     dic = {'M': 'M',
            'F': 'F'}
     col = col.apply(lambda x: dic.get(x, 'U'))
+    return col
+
+
+def language(col):
+    dic = {'English': 'ENG',
+           '': ''
+           }
+    col = col.apply(lambda x: dic.get(x, '-'))
     return col
 
 
@@ -68,6 +81,12 @@ def disposition():
 def snomedicdbasicmap(col):
     dic = snomeddict
     col = col.apply(lambda x: dic.get(x, ''))
+    return col
+
+
+def hcai(col, length):
+    dic = HCAImap
+    col = col.apply(lambda x: dic.get(x, '')[-length:])
     return col
 
 

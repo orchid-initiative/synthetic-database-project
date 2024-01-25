@@ -23,12 +23,21 @@ def parse_arguments():
     parser.add_argument('-ID', '--FacilityID', help='Specify the Facility ID to tag', default='010735')
     parser.add_argument('-V', '--Verbose', help='Include additional fields, not part of offical outputs', default=False)
 
-# Add an argument to just run formatting code (i.e. bypass running synthea again and do not delete output/ files)
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('-F', '--FormatOnly', help='Only Run Formatting code', action='store_true', default=False)
-    group.add_argument('-D', '--SyntheaGenOnly', help='Only Run Synthea Data Generation, not Formatting',
-                       action='store_true', default=False)
-    return parser.parse_args()
+    # Add arguments that allow reports to be generated on a yearly basis.  To avoid excess files, add date restriction
+    group1 = parser.add_argument_group()
+    parser.add_argument('-Y', '--Yearly', help='Separate the output by year', default=False)
+    parser.add_argument('-R', '--YearRange', help='Restrict output to certain years', default=False)
+
+    # Add an argument to just run formatting code (i.e. bypass running synthea again and do not delete output/ files)
+    group2 = parser.add_mutually_exclusive_group()
+    group2.add_argument('-F', '--FormatOnly', help='Only Run Formatting code', action='store_true', default=False)
+    group2.add_argument('-D', '--SyntheaGenOnly', help='Only Run Synthea Data Generation, not Formatting',
+                        action='store_true', default=False)
+    args = parser.parse_args()
+    if args.Yearly and args.YearRange is None:
+        parser.error("--Yearly requires --YearRange")
+
+    return args
 
 
 def main():

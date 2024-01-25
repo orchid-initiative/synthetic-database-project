@@ -4,8 +4,9 @@ from synth_data_module import Formatter, SyntheaOutput, modify_row
 import datetime as dt
 import pandas as pd
 import numpy as np
+import os
+from io import StringIO
 import synth_data_module.mappings as mappings
-
 
 
 class HCAIBase(Formatter, ABC):
@@ -13,7 +14,6 @@ class HCAIBase(Formatter, ABC):
         self.output_df = pd.DataFrame
         self.synthea_output = SyntheaOutput()
         self.kwargs = kwargs
-        self.facility_id = self.kwargs['FacilityID']
         # TODO all_fields and final_fields will be defined in the subclass - I dont know the proper way to handle this
         self.all_fields = pd.DataFrame()
         self.final_fields = pd.DataFrame()
@@ -33,8 +33,27 @@ class HCAIBase(Formatter, ABC):
         self.fill_missing()
 
     def write_data(self, data, filename=None):
-        with open(filename or self.suggested_filename(), "w") as f:
+        filename = (filename or self.suggested_filename())
+        with open(filename, "w") as f:
             f.write(data)
+
+        if self.kwargs['Yearly']:
+            self.write_yearly_data(data, filename)
+
+    def write_yearly_data(self, data, filename):
+        # Create the directory to put the yearly files in and identify their base names
+        basename = os.path.basename(filename).split(".")[0]
+        directory = os.path.abspath(filename).split(".")[0]
+        os.mkdir(directory)
+
+        all_data = pd.read_csv(StringIO(data), dtype=str)
+        year_range = list(map(int, self.kwargs['YearRange'].split("-")))
+        for year in range(year_range[0], year_range[1]+1):
+            sbuffer = StringIO()
+            all_data[all_data['dsch_yr'] == str(year)].to_csv(sbuffer, index=False)
+            yearly_filename = f'{directory}/{basename}_{year}.csv'
+            with open(yearly_filename, "w") as f:
+                f.write(sbuffer.getvalue())
 
     def add_demographics(self):
         patients = self.synthea_output.patients_df()
@@ -136,11 +155,6 @@ class HCAIBase(Formatter, ABC):
         # Hard code Type of Care to be 1 ("Acute Care") always for now
         care_s = pd.Series([1 for _ in range(len(self.output_df.index))])
         self.output_df = pd.concat([self.output_df, care_s.rename('Type of Care')], axis=1)
-
-        # Hard code Facility ID to be the passed in value from run_synthea
-        # Todo: make this a runtime arg with a default value
-        facility_s = pd.Series([self.facility_id for _ in range(len(self.output_df.index))])
-        self.output_df = pd.concat([self.output_df, facility_s.rename('Facility Identification Number')], axis=1)
 
         # Randomly assign Type of Admission, Point of Origin, Route of Admission
         ta_s = pd.Series(np.random.choice(['1', '2', '3', '4', '5', '9'], size=len(self.output_df)))

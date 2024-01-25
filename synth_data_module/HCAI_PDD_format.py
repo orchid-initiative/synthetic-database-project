@@ -121,8 +121,6 @@ class HCAIPDDFormat(HCAIBase):
         encounters['organization_id'] = encounters.iloc[:, 4]
         encounters['payer_id'] = encounters.iloc[:, 6]
         encounters['EncounterClass'] = encounters.iloc[:, 7]
-        print(self.kwargs)
-        print(self.kwargs['EncounterType'])
         if self.kwargs['EncounterType']:
             encounters = encounters.loc[encounters['EncounterClass'] == self.kwargs['EncounterType'], :].copy()
 
@@ -147,6 +145,11 @@ class HCAIPDDFormat(HCAIBase):
         encounters['Discharge Quarter'] = pd.to_datetime(encounters.iloc[:, 2]).dt.quarter.astype(object)
         encounters['Discharge Year'] = pd.to_datetime(encounters.iloc[:, 2]).dt.year.astype(object)
 
+        if self.kwargs['YearRange']:
+            year_range = list(map(int, self.kwargs['YearRange'].split("-")))
+            encounters = encounters[(encounters['Discharge Year'] >= year_range[0])
+                                    & (encounters['Discharge Year'] <= year_range[1])]
+
         # encounters['Principal Diagnosis'] = encounters.iloc[:, 13]  # Needs mapping for ICD-10
         encounters['Principal Diagnosis'] = mappings.snomedicdbasicmap(encounters.iloc[:, 13])
         encounters['Total Charges'] = encounters.iloc[:, 11].apply(lambda x: str(min(int(x.split('.')[0]), 9999999)))
@@ -156,12 +159,13 @@ class HCAIPDDFormat(HCAIBase):
         # Prepare and merge organizations name as Facility Name (replace IDs with real names) into encounters
         organizations = self.synthea_output.organizations_df()
         organizations['organization_id'] = organizations.iloc[:, 0]
+        organizations['Facility Identification Number'] = mappings.hcai(organizations.iloc[:, 1], length=6)
+        organizations['Facility Identification Number Long'] = mappings.hcai(organizations.iloc[:, 1], length=9)
         organizations['Hospital County'] = mappings.CAcity(organizations.iloc[:, 3])
-        print(organizations.iloc[:, 3])
-        print(organizations['Hospital County'])
         organizations['Hospital Zip Code'] = organizations.iloc[:, 5].apply(lambda x: x[:5])
-        encounters = encounters.merge(organizations[['organization_id', 'Hospital County', 'Hospital Zip Code']], how='left',
-                                      left_on='organization_id', right_on='organization_id')
+        encounters = encounters.merge(organizations[['organization_id', 'Hospital County', 'Hospital Zip Code',
+                                      'Facility Identification Number', 'Facility Identification Number Long']],
+                                      how='left', left_on='organization_id', right_on='organization_id')
         print('SUB-CHECK - Facility  merged.  Encounters Shape: ', encounters.shape)
 
         # Prepare and merge payers info (replace IDs with real payer data) into encounters
@@ -172,12 +176,25 @@ class HCAIPDDFormat(HCAIBase):
                                       right_on='payer_id')
         print('SUB-CHECK - Payers and codes merged.  Encounters Shape: ', encounters.shape)
 
+        # Prepare and merge observations info (for language) into encounters
+        observations = self.synthea_output.observations_df(subfields=[2, 5, 6])
+        observations['encounter_id'] = observations.iloc[:, 0]
+        observations['description'] = observations.iloc[:, 1]
+        observations['Preferred Language Spoken Write In'] = observations.iloc[:, 2]
+        observations['Preferred Language Spoken'] = mappings.language(observations.iloc[:, 2])
+        observations = observations.loc[observations['description'] == 'Preferred language']
+        encounters = encounters.merge(observations[['encounter_id', 'Preferred Language Spoken Write In',
+                                                    'Preferred Language Spoken']],
+                                      how='left', left_on='encounter_id', right_on='encounter_id')
+        print('SUB-CHECK - observations and language merged.  Encounters Shape: ', encounters.shape)
+
         # Merge the encounters dataframe into self.output_df, keeping only the fields we care about
         self.output_df = self.output_df.merge(encounters[[
             'encounter_id', 'Admission Date', 'Admission Day of the Week', 'Admission Month', 'Admission Quarter',
             'Admission Year', 'Discharge Date', 'Discharge Month', 'Discharge Quarter', 'Discharge Year',
             'Principal Diagnosis', 'Total Charges', 'Total Charges Adjusted', 'Payer Category', 'Hospital County',
-            'Hospital Zip Code']],
+            'Hospital Zip Code', 'Facility Identification Number', 'Facility Identification Number Long',
+            'Preferred Language Spoken Write In', 'Preferred Language Spoken']],
             how='left', left_on='patient_id', right_on=encounters.iloc[:, 3])
         print('Encounter info added.  Shape: ', self.output_df.shape)
         self.output_df = self.output_df.dropna(subset=['encounter_id']).reset_index(drop=True)
