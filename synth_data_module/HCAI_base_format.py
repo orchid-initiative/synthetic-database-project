@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 from configparser import ConfigParser
-from synth_data_module import Formatter, SyntheaOutput, modify_row
+from io import StringIO
+from synth_data_module import logging_helpers, Formatter, SyntheaOutput, modify_procedure_row, modify_diagnosis_row, calculate_age
 import datetime as dt
+import os
 import pandas as pd
 import numpy as np
-import os
-from io import StringIO
 import synth_data_module.mappings as mappings
+import time
 
 
 class HCAIBase(Formatter, ABC):
@@ -31,6 +32,7 @@ class HCAIBase(Formatter, ABC):
         self.add_other_diagnosis()
         self.hard_coding()
         self.fill_missing()
+        self.type_data()
 
     def write_data(self, data, filename=None):
         filename = (filename or self.suggested_filename())
@@ -56,6 +58,7 @@ class HCAIBase(Formatter, ABC):
                 f.write(sbuffer.getvalue())
 
     def add_demographics(self):
+        demo_start = time.time()
         patients = self.synthea_output.patients_df()
         patients['patient_id'] = patients.iloc[:, 0]
         try:
@@ -83,78 +86,118 @@ class HCAIBase(Formatter, ABC):
                                    'Patient Address - Address Number and Street Name', 'Patient Address - City',
                                    'Patient Address - State', 'Patient Address - County', 'Patient Address - Zip Code',
                                    'Patient Address - Country Code']]
-        print('Demographics added.  Shape: ', self.output_df.shape)
+        print('Demographics added. Shape: ', self.output_df.shape)
+
         del patients
+        logging_helpers.printElapsedTime(demo_start, "Demographic time taken: ")
 
     @abstractmethod
     def add_encounters(self) -> pd.DataFrame:
         pass
 
     def add_procedures(self):
+        proc_start = time.time()
         procedures = self.synthea_output.procedures_df(subfields=[0, 3, 4])
 
         # TODO procedures are not included in the current basic snomed map, find them.  Pass-through for now.
         #  Note that these are also longer and get truncated by field length later!
-        #  procedures['Procedure Codes'] = mappings.snomedicdbasicmap(procedures.iloc[:, 4])
+        #  procedures['Procedure Codes'] = mappings.snomedicdbasicmap(procedures.iloc[:, 2])
         # Reminder that column index 1 here is the column index 3 from the procedures.csv due to our subfields parameter
         procedures['encounter_id'] = procedures.iloc[:, 1]
-        procedures['Procedure Codes'] = procedures.iloc[:, 2]
-        # Similar to encounters, we handle either date formatting
+
+        # We do have some static LARC-related mappings, so try those, but for most results, its a passthrough of SNOMED
+        procedures['Procedure Codes'] = mappings.larcsnomedmap(procedures.iloc[:, 2])
+
+        # Similar to encounters, we handle either date formatting here
         try:
             procedures['Procedure Dates'] = procedures.iloc[:, 0].apply(lambda x: x.strftime('%Y%m%d'))
         except TypeError:
             procedures['Procedure Dates'] = procedures.iloc[:, 0].apply(
                 lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
 
+        # Grab Admission Date from output_df
+        procedures = procedures.merge(self.output_df[['encounter_id', 'Admission Date']],
+                                      how='left', on='encounter_id')
+        procedures['Procedure Days'] = procedures.apply(
+            lambda x: calculate_age(x['Admission Date'], x['Procedure Dates'], "staydays"), axis=1)
+
         # Group codes by encounter_id to consolidate to one row for each encounter - this makes later merges easier
         print('SUB-CHECK - Procedures Shape pre group: ', procedures.shape)
         procedures = procedures.groupby('encounter_id').agg(lambda x: tuple(x)).reset_index()
+
         print('SUB-CHECK - Procedures Shape post group: ', procedures.shape)
 
+        # Assign some MSDRG codes used in the LARC study.  Ordered so the most accurate one assigns.
+        procedures.loc[procedures['Procedure Codes'].apply(lambda x: '66348005' in x),              # Parturition
+                       ['Medicare Severity-Diagnosis Related Group', 'Major Diagnostic Category']] = ['807', '14']
+        procedures.loc[procedures['Procedure Codes'].apply(lambda x: '85548006' in x),              # Episiotomy
+                       ['Medicare Severity-Diagnosis Related Group', 'Major Diagnostic Category']] = ['768', '14']
+        procedures.loc[procedures['Procedure Codes'].apply(lambda x: '11466000' in x),              # C-section
+                       ['Medicare Severity-Diagnosis Related Group', 'Major Diagnostic Category']] = ['788', '14']
+
         # Merge procedure code and date into output_df and then do a special formatting operation for the lists
-        self.output_df = self.output_df.merge(procedures[['Procedure Codes', 'Procedure Dates']],
-                                              how='left', left_on='encounter_id', right_on=procedures.iloc[:, 0])
+        self.output_df = self.output_df.merge(procedures[['encounter_id', 'Procedure Codes', 'Procedure Dates', 'Procedure Days', 'Medicare Severity-Diagnosis Related Group']],
+                                              how='left', on='encounter_id')
         print('Procedures info added.  Shape: ', self.output_df.shape)
 
-        self.output_df = self.output_df.apply(modify_row, axis=1, args=(
-            ['Procedure Codes', 'Procedure Dates'], ['Procedure Code', 'Procedure Date']))
+        self.output_df = self.output_df.apply(modify_procedure_row, axis=1, args=(
+            ['Procedure Codes', 'Procedure Dates', 'Procedure Days'], ['Procedure Code', 'Procedure Date', 'Procedure Days']))
         print('Procedure info formatted.   Shape: ', self.output_df.shape)
 
         del procedures
+        logging_helpers.printElapsedTime(proc_start, "Procedure time taken: ")
 
     def add_other_diagnosis(self):
+        diagnosis_start = time.time()
         # As the file sizes get large, a full read_csv becomes impossible, so we select the columns we want to use and
         # effectively reindex them in the dataframe we are creating (i.e. column 8 in the csv becomes column 0, etc.)
-        diagnosis = self.synthea_output.diagnosis_df(subfields=[8, 88, 90])
+        diagnosis = self.synthea_output.diagnosis_df(subfields=[8, 21, 88, 90])
 
         # Reminder that column index 0 here is the column index 8 from the CPCSD_Claims.csv due to our usecols parameter
         diagnosis['encounter_id'] = diagnosis.iloc[:, 0]
-
-        diagnosis['Diagnosis Codes'] = mappings.snomedicdbasicmap(diagnosis.iloc[:, 1])
+        diagnosis['coverage_id'] = diagnosis.iloc[:, 1]
+        diagnosis['Diagnosis Codes'] = mappings.snomedicdbasicmap(diagnosis.iloc[:, 2])
         diagnosis['Diagnosis Codes'].replace("", np.nan, inplace=True)
         diagnosis.dropna(subset=['Diagnosis Codes'], inplace=True)
+        diagnosis['Present on Admission'] = diagnosis.iloc[:, 3]
 
-        diagnosis['Present on Admission'] = diagnosis.iloc[:, 2]
 
+        # Group up the diagnosis codes by encounter_id
         print('SUB-CHECK - Diagnosis Shape pre group: ', diagnosis.shape)
-
-        diagnosis = diagnosis.groupby('encounter_id').agg(lambda x: tuple(x)).reset_index()
+        diagnosis = diagnosis.groupby(['encounter_id', 'coverage_id']).agg(lambda x: tuple(x)).reset_index()
         print('SUB-CHECK - Diagnosis Shape post group: ', diagnosis.shape)
 
-        self.output_df = self.output_df.merge(diagnosis[['Diagnosis Codes', 'Present on Admission']],
+        # Add in Coverage Type
+        coverages = self.synthea_output.coverages_df(subfields=[0, 4])
+        coverages['coverage_id'] = coverages.iloc[:, 0]
+        coverages['Type of Coverage'] = mappings.cov_to_pay_type(coverages.iloc[:, 1])
+        diagnosis = diagnosis.merge(coverages[['coverage_id', 'Type of Coverage']], how='left', left_on='coverage_id',
+                                    right_on='coverage_id')
+
+        self.output_df = self.output_df.merge(diagnosis[['Type of Coverage', 'Diagnosis Codes', 'Present on Admission']],
                                               how='left', left_on='encounter_id', right_on=diagnosis.iloc[:, 0])
 
         print('Diagnosis info added.  Shape: ', self.output_df.shape)
 
-        self.output_df = self.output_df.apply(modify_row, axis=1, args=(
+        self.output_df = self.output_df.apply(modify_diagnosis_row, axis=1, args=(
             ['Diagnosis Codes', 'Present on Admission'], ['Diagnosis', 'Present on Admission']))
 
         del diagnosis
+        logging_helpers.printElapsedTime(diagnosis_start, "Diagnosis time taken: ")
 
     def hard_coding(self):
+        hardcoding_start = time.time()
+
         # Hard code Type of Care to be 1 ("Acute Care") always for now
         care_s = pd.Series([1 for _ in range(len(self.output_df.index))])
         self.output_df = pd.concat([self.output_df, care_s.rename('Type of Care')], axis=1)
+
+        # Display coverage type coverage type = 0 for any payer catagory 07,08,09
+        self.output_df.loc[self.output_df['Payer Category'].isin(['07', '08', '09']), 'Type of Coverage'] = '0'
+
+        # Display plan codes only for coverage type 1 (HMO), display 0000 for all other
+        self.output_df.loc[self.output_df['Type of Coverage'].isin(['0', '2', '3']), 'Plan Code Number'] = '0000'
+
 
         # Randomly assign Type of Admission, Point of Origin, Route of Admission
         ta_s = pd.Series(np.random.choice(['1', '2', '3', '4', '5', '9'], size=len(self.output_df)))
@@ -192,12 +235,18 @@ class HCAIBase(Formatter, ABC):
         self.output_df = pd.concat([self.output_df, count_s.rename('Counter')], axis=1)
 
         print('Hard-coded fields added.  Shape: ', self.output_df.shape)
+        logging_helpers.printElapsedTime(hardcoding_start, "Hardcoding time taken: ")
 
     def fill_missing(self):
         cols = list(self.output_df.columns)
-        missing = list(set(self.final_fields['name'].tolist()).difference(cols))
+        missing = sorted(list(set(self.final_fields['name'].tolist()).difference(cols)))
         none_s = pd.Series([None for _ in range(len(self.output_df.index))])
+        print("\n", "Missing Fields: assigning null values", "\n")
         for col in missing:
-            print(col, "is missing, assigning null values")
+            print("  ", col)
             # self.output_df[col] = None
             self.output_df = pd.concat([self.output_df, none_s.rename(col)], axis=1)
+        print("End Missing Fields")
+
+    def type_data(self):
+        self.output_df = self.output_df.convert_dtypes()

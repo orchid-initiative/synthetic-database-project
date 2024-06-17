@@ -1,5 +1,5 @@
 import csv
-
+import random
 import pandas as pd
 
 with open('synth_data_module/snomedbasicmappings.csv') as f:
@@ -27,11 +27,63 @@ def gender(col):
     return col
 
 
+def languagewritein(col):
+    language_list = ['English', 'Spanish', 'Mandarin', 'Tagalog', 'Vietnamese', 'Korean', 'Farsi', 'Armenian', 'Arabic',
+                     'Hindi']
+    language_weights = (58.2, 28.8, 3.2, 2.2, 1.5, 1, 0.5, 0.5, 0.5, 0.5)
+    col = col.apply(lambda x: random.choices(language_list, weights=language_weights)[0] if pd.isnull(x) else x)
+    return col
+
+
 def language(col):
-    dic = {'English': 'ENG',
-           '': ''
-           }
+    dic = {
+            'English': 'ENG',
+            'Spanish': 'SPA',
+            'Mandarin': 'CMN',
+            'Tagalog': 'TGL',
+            'Vietnamese': 'VIE',
+            'Korean': 'KOR',
+            'Farsi': 'PES',
+            'Armenian': 'ARM',
+            'Arabic': 'ARA',
+            'Hindi': 'HIN',
+            '': ''
+            }
     col = col.apply(lambda x: dic.get(x, '-'))
+    return col
+
+
+def larcsnomedmap(col):
+    dic = {'65200003':  {'0UH97HZ': 99, '0UH98HZ': 1},
+           '169553002': {'0JHD3HZ': 10, '0JHF3HZ': 90},
+           }
+    col = col.apply(lambda x: random.choices(list(dic.get(x, {x: x}).keys()),
+                                             weights=tuple(dic.get(x, {x: 1}).values()))[0])
+    return col
+
+
+def cov_to_pay_type(col):
+    dic = {
+        'HMO': '1',
+        'PPO': '2',
+        'EPO': '2',
+        'POS': '2',
+    }
+    col = col.apply(lambda x: dic.get(x, '-'))
+    return col
+
+
+def hmo_plan_codes(col):
+    dic = {
+        'Humana': '0476',
+        'Blue Cross Blue Shield': '0043',
+        'UnitedHealthcare': '0126',
+        'Aetna': '0176',
+        'Cigna Health': '0152',
+        'Anthem': '0303',
+        'Kaiser': '0055',
+    }
+    col = col.apply(lambda x: dic.get(x, '0000'))
     return col
 
 
@@ -59,6 +111,14 @@ def payer_category(df):
     else:
         category = '09'
     return category
+
+
+def drg_catagories(col):
+    dic = {'788': '788',  # CESAREAN SECTION WITHOUT STERILIZATION WITHOUT CC/MCC
+           '768': '768',  # VAGINAL DELIVERY WITH O.R. PROCEDURE EXCEPT STERILIZATION AND/OR D&C
+           '807': '807'}  # VAGINAL DELIVERY WITHOUT STERILIZATION OR D&C WITHOUT CC/MCC
+    col = col.apply(lambda x: dic.get(x, ''))
+    return col
 
 
 def race(col):
