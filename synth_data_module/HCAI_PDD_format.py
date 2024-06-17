@@ -1,9 +1,9 @@
+from io import StringIO
+from synth_data_module import logging_helpers, HCAIBase, get_procedure_list, get_diagnosis_list, get_morbidity_list, calculate_age
 import datetime as dt
-from synth_data_module import HCAIBase, get_procedure_list, get_diagnosis_list, get_morbidity_list, calculate_age
 import pandas as pd
 import synth_data_module.mappings as mappings
 import time
-from io import StringIO
 
 
 class HCAIPDDFormat(HCAIBase):
@@ -116,7 +116,9 @@ class HCAIPDDFormat(HCAIBase):
         return sbuffer.getvalue()
 
     def add_encounters(self):
+        encount_start = time.time()
         encounters = self.synthea_output.encounters_df()
+
         encounters['encounter_id'] = encounters.iloc[:, 0]
         encounters['organization_id'] = encounters.iloc[:, 4]
         encounters['payer_id'] = encounters.iloc[:, 6]
@@ -150,7 +152,6 @@ class HCAIPDDFormat(HCAIBase):
             encounters = encounters[(encounters['Discharge Year'] >= year_range[0])
                                     & (encounters['Discharge Year'] <= year_range[1])]
 
-        # encounters['Principal Diagnosis'] = encounters.iloc[:, 13]  # Needs mapping for ICD-10
         encounters['Principal Diagnosis'] = mappings.snomedicdbasicmap(encounters.iloc[:, 13])
         encounters['Total Charges'] = encounters.iloc[:, 11].apply(lambda x: str(min(int(x.split('.')[0]), 9999999)))
         encounters['Total Charges Adjusted'] = encounters.iloc[:, 11].apply(lambda x: str(min(int(x.split('.')[0]), 9999999)))
@@ -171,8 +172,9 @@ class HCAIPDDFormat(HCAIBase):
         # Prepare and merge payers info (replace IDs with real payer data) into encounters
         payers = self.synthea_output.payers_df()
         payers['payer_id'] = payers.iloc[:, 0]
+        payers['Plan Code Number'] = mappings.hmo_plan_codes(payers.iloc[:, 1])
         payers['Payer Category'] = payers.apply(mappings.payer_category, axis=1).astype(str)
-        encounters = encounters.merge(payers[['payer_id', 'Payer Category']], how='left', left_on='payer_id',
+        encounters = encounters.merge(payers[['payer_id', 'Plan Code Number', 'Payer Category']], how='left', left_on='payer_id',
                                       right_on='payer_id')
         print('SUB-CHECK - Payers and codes merged.  Encounters Shape: ', encounters.shape)
 
@@ -180,21 +182,23 @@ class HCAIPDDFormat(HCAIBase):
         observations = self.synthea_output.observations_df(subfields=[2, 5, 6])
         observations['encounter_id'] = observations.iloc[:, 0]
         observations['description'] = observations.iloc[:, 1]
-        observations['Preferred Language Spoken Write In'] = observations.iloc[:, 2]
-        observations['Preferred Language Spoken'] = mappings.language(observations.iloc[:, 2])
         observations = observations.loc[observations['description'] == 'Preferred language']
-        encounters = encounters.merge(observations[['encounter_id', 'Preferred Language Spoken Write In',
-                                                    'Preferred Language Spoken']],
+        observations['Preferred Language Spoken Write In'] = observations.iloc[:, 2]
+        encounters = encounters.merge(observations[['encounter_id', 'Preferred Language Spoken Write In']],
                                       how='left', left_on='encounter_id', right_on='encounter_id')
         print('SUB-CHECK - observations and language merged.  Encounters Shape: ', encounters.shape)
+
+        encounters['Preferred Language Spoken Write In'] = mappings.languagewritein(
+            encounters['Preferred Language Spoken Write In'])
+        encounters['Preferred Language Spoken'] = mappings.language(encounters['Preferred Language Spoken Write In'])
 
         # Merge the encounters dataframe into self.output_df, keeping only the fields we care about
         self.output_df = self.output_df.merge(encounters[[
             'encounter_id', 'Admission Date', 'Admission Day of the Week', 'Admission Month', 'Admission Quarter',
             'Admission Year', 'Discharge Date', 'Discharge Month', 'Discharge Quarter', 'Discharge Year',
-            'Principal Diagnosis', 'Total Charges', 'Total Charges Adjusted', 'Payer Category', 'Hospital County',
-            'Hospital Zip Code', 'Facility Identification Number', 'Facility Identification Number Long',
-            'Preferred Language Spoken Write In', 'Preferred Language Spoken']],
+            'Principal Diagnosis', 'Total Charges', 'Total Charges Adjusted', 'Plan Code Number', 'Payer Category',
+            'Hospital County', 'Hospital Zip Code', 'Facility Identification Number',
+            'Facility Identification Number Long', 'Preferred Language Spoken Write In', 'Preferred Language Spoken']],
             how='left', left_on='patient_id', right_on=encounters.iloc[:, 3])
         print('Encounter info added.  Shape: ', self.output_df.shape)
         self.output_df = self.output_df.dropna(subset=['encounter_id']).reset_index(drop=True)
@@ -221,3 +225,4 @@ class HCAIPDDFormat(HCAIBase):
         print('Added age and duration statistics for admission and discharge.  Shape: ', self.output_df.shape)
 
         del encounters
+        logging_helpers.printElapsedTime(encount_start, "Encounter time taken: ")

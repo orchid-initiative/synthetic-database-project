@@ -144,6 +144,20 @@ class HCAIInpatientFormat(HCAIBase):
                                       right_on='payer_id')
         print('SUB-CHECK - Payers and codes merged.  Encounters Shape: ', encounters.shape)
 
+        # Prepare and merge observations info (for language) into encounters
+        observations = self.synthea_output.observations_df(subfields=[2, 5, 6])
+        observations['encounter_id'] = observations.iloc[:, 0]
+        observations['description'] = observations.iloc[:, 1]
+        observations = observations.loc[observations['description'] == 'Preferred language']
+        observations['Preferred Language Spoken Write In'] = observations.iloc[:, 2]
+        encounters = encounters.merge(observations[['encounter_id', 'Preferred Language Spoken Write In']],
+                                      how='left', left_on='encounter_id', right_on='encounter_id')
+        print('SUB-CHECK - observations and language merged.  Encounters Shape: ', encounters.shape)
+
+        encounters['Preferred Language Spoken Write In'] = mappings.languagewritein(
+            encounters['Preferred Language Spoken Write In'])
+        encounters['Preferred Language Spoken'] = mappings.language(encounters['Preferred Language Spoken Write In'])
+
         # Merge the encounters dataframe into self.output_df, keeping only the fields we care about
         self.output_df = self.output_df.merge(encounters[['encounter_id', 'Admission Date', 'Discharge Date',
                                                           'Principal Diagnosis', 'Total Charges', 'Payer Category',

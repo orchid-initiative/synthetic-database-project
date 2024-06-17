@@ -24,6 +24,9 @@ class SyntheaOutput:
     def diagnosis_df(self, subfields: list = None) -> pd.DataFrame:
         return pd.read_csv(f'{self.output_loc}/cpcds/CPCDS_Claims.csv', dtype=str, header=0, usecols=subfields)
 
+    def coverages_df(self, subfields: list = None) -> pd.DataFrame:
+        return pd.read_csv(f'{self.output_loc}/cpcds/CPCDS_Coverages.csv', dtype=str, header=0, usecols=subfields)
+
     def organizations_df(self, subfields: list = None) -> pd.DataFrame:
         return pd.read_csv(f'{self.output_loc}/csv/organizations.csv', dtype=str, parse_dates=[1, 2], header=0)
 
