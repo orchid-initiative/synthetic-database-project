@@ -6,9 +6,10 @@ import synth_data_module.mappings as mappings
 import time
 from io import StringIO
 
+
 class HCAIInpatientFormat(HCAIBase):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, timers, **kwargs):
+        super().__init__(timers, **kwargs)
 
         procedure_list = get_procedure_list()
         diagnosis_list = get_diagnosis_list(length=7)

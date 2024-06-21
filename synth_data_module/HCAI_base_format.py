@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from configparser import ConfigParser
 from io import StringIO
-from synth_data_module import logging_helpers, Formatter, SyntheaOutput, modify_procedure_row, modify_diagnosis_row, calculate_age
+from synth_data_module import Formatter, SyntheaOutput, modify_procedure_row, modify_diagnosis_row, calculate_age
 import datetime as dt
 import os
 import pandas as pd
@@ -11,8 +11,9 @@ import time
 
 
 class HCAIBase(Formatter, ABC):
-    def __init__(self, **kwargs):
+    def __init__(self, timers, **kwargs):
         self.output_df = pd.DataFrame
+        self.timers = timers
         self.synthea_output = SyntheaOutput()
         self.kwargs = kwargs
         # TODO all_fields and final_fields will be defined in the subclass - I dont know the proper way to handle this
@@ -21,7 +22,12 @@ class HCAIBase(Formatter, ABC):
 
         # Grab the synthea_settings txt file and consume the settings as a dictionary for use as needed
         java_configs = ConfigParser()
-        with open("synthea_settings") as stream:
+        study = self.kwargs['Study']
+        if study:
+            settingsfile = f'StudyOverrides/{study}/synthea_settings'
+        else:
+            settingsfile = "synthea_settings"
+        with open(settingsfile) as stream:
             java_configs.read_string("[SETTINGS]\n" + stream.read())
         self.country_code = java_configs['SETTINGS']['generate.geography.country_code']
 
@@ -89,7 +95,7 @@ class HCAIBase(Formatter, ABC):
         print('Demographics added. Shape: ', self.output_df.shape)
 
         del patients
-        logging_helpers.printElapsedTime(demo_start, "Demographic time taken: ")
+        self.timers.record_time('Demographics', demo_start)
 
     @abstractmethod
     def add_encounters(self) -> pd.DataFrame:
@@ -145,7 +151,7 @@ class HCAIBase(Formatter, ABC):
         print('Procedure info formatted.   Shape: ', self.output_df.shape)
 
         del procedures
-        logging_helpers.printElapsedTime(proc_start, "Procedure time taken: ")
+        self.timers.record_time('Procedures', proc_start)
 
     def add_other_diagnosis(self):
         diagnosis_start = time.time()
@@ -183,7 +189,7 @@ class HCAIBase(Formatter, ABC):
             ['Diagnosis Codes', 'Present on Admission'], ['Diagnosis', 'Present on Admission']))
 
         del diagnosis
-        logging_helpers.printElapsedTime(diagnosis_start, "Diagnosis time taken: ")
+        self.timers.record_time('Diagnoses', diagnosis_start)
 
     def hard_coding(self):
         hardcoding_start = time.time()
@@ -192,12 +198,11 @@ class HCAIBase(Formatter, ABC):
         care_s = pd.Series([1 for _ in range(len(self.output_df.index))])
         self.output_df = pd.concat([self.output_df, care_s.rename('Type of Care')], axis=1)
 
-        # Display coverage type coverage type = 0 for any payer catagory 07,08,09
+        # Display coverage type = 0 for any payer catagory 07,08,09
         self.output_df.loc[self.output_df['Payer Category'].isin(['07', '08', '09']), 'Type of Coverage'] = '0'
 
         # Display plan codes only for coverage type 1 (HMO), display 0000 for all other
         self.output_df.loc[self.output_df['Type of Coverage'].isin(['0', '2', '3']), 'Plan Code Number'] = '0000'
-
 
         # Randomly assign Type of Admission, Point of Origin, Route of Admission
         ta_s = pd.Series(np.random.choice(['1', '2', '3', '4', '5', '9'], size=len(self.output_df)))
@@ -235,7 +240,7 @@ class HCAIBase(Formatter, ABC):
         self.output_df = pd.concat([self.output_df, count_s.rename('Counter')], axis=1)
 
         print('Hard-coded fields added.  Shape: ', self.output_df.shape)
-        logging_helpers.printElapsedTime(hardcoding_start, "Hardcoding time taken: ")
+        self.timers.record_time('Hardcoding', hardcoding_start)
 
     def fill_missing(self):
         cols = list(self.output_df.columns)
