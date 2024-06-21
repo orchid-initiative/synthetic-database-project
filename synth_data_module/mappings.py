@@ -7,7 +7,7 @@ with open('synth_data_module/snomedbasicmappings.csv') as f:
     reader = csv.reader(f, skipinitialspace=True)
     snomeddict = dict(reader)
 
-with open('overrides/LARCStudyhospitals.csv') as f:
+with open('StudyOverrides/LARC/hospitals.csv') as f:
     next(f)  # Skip the header
     reader = csv.reader(f, skipinitialspace=True)
     HCAImap = {rows[2]: rows[19] for rows in reader}

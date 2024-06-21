@@ -1,5 +1,5 @@
 from io import StringIO
-from synth_data_module import logging_helpers, HCAIBase, get_procedure_list, get_diagnosis_list, get_morbidity_list, calculate_age
+from synth_data_module import HCAIBase, get_procedure_list, get_diagnosis_list, get_morbidity_list, calculate_age
 import datetime as dt
 import pandas as pd
 import synth_data_module.mappings as mappings
@@ -7,8 +7,8 @@ import time
 
 
 class HCAIPDDFormat(HCAIBase):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, timers, **kwargs):
+        super().__init__(timers, **kwargs)
 
         procedure_list = get_procedure_list()
         diagnosis_list = get_diagnosis_list(length=8)
@@ -225,4 +225,4 @@ class HCAIPDDFormat(HCAIBase):
         print('Added age and duration statistics for admission and discharge.  Shape: ', self.output_df.shape)
 
         del encounters
-        logging_helpers.printElapsedTime(encount_start, "Encounter time taken: ")
+        self.timers.record_time('Encounters', encount_start)

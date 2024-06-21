@@ -208,8 +208,8 @@ generate.costs.default_device_cost = 0.00
 generate.costs.default_supply_cost = 0.00
 
 # Providers
-# generate.providers.hospitals.default_file = overrides/hospitals.csv
-generate.providers.hospitals.default_file = providers/hospitals.csv
+generate.providers.hospitals.default_file = overrides/LARCStudyhospitals.csv
+# generate.providers.hospitals.default_file = providers/hospitals.csv
 generate.providers.longterm.default_file = providers/longterm.csv
 generate.providers.nursing.default_file = providers/nursing.csv
 generate.providers.rehab.default_file = providers/rehab.csv

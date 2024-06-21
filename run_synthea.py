@@ -5,23 +5,38 @@ import datetime as dt
 import argparse
 
 
+# Initialize timers
+timers = CreateTimers()
+
+# Predefined Studies
+predefined_studies = {
+    'LARC': {'Gender': 'F', 'Age': '15-50', 'FormatType': 'HCAI_PDD_CSV', 'City': 'Los Angeles,California',
+             'ModuleOverrides': True},
+    # Add more predefined studies as needed
+}
+studyfolder = ''
+
+
 def parse_arguments():
+    global studyfolder
     # Initialize parser
     parser = argparse.ArgumentParser()
-    parser.add_argument('-T', '--EncounterType', help='Specify Encounter Type',
-                        choices=['inpatient', 'outpatient', 'ambulatory', 'wellness', 'virtual', 'urgentcare',
-                                 'emergency'], default='inpatient')
+
+    parser.add_argument('-A', '--Age', help='Restrict the Age Range of Inspection', default=False)
     parser.add_argument('-C', '--City', help='Specify the City, State for the synthea location', default=None)
-    parser.add_argument('-G', '--Gender', help='Specify the gender of patients',
-                        choices=['M', 'F'], default=False)
-    parser.add_argument('-N', '--PersonCount', help='Number of patients', type=int, metavar="[1-5000]",
-                        choices=range(1, 5000), default=100)
+    parser.add_argument('-G', '--Gender', help='Specify the gender of patients', choices=['M', 'F'], default=False)
+    #parser.add_argument('-ID', '--FacilityID', help='Specify the Facility ID to tag', default='010735')
+    parser.add_argument('-M', '--ModuleOverrides', help='Allows local modules to be used instead of JAR modules',
+                        action='store_true', default=False)
+    parser.add_argument('-N', '--PersonCount', help='Number of patients', type=int, metavar="[1-15000]", default=100)
     parser.add_argument('-O', '--FormatType', help='Specify the type of output',
                         choices=['HCAI_Inpatient_CSV', 'HCAI_Inpatient_FW', 'HCAI_PDD_CSV', 'HCAI_PDD_SAS', "all"],
                         default="all")
-    parser.add_argument('-ID', '--FacilityID', help='Specify the Facility ID to tag', default='010735')
+    parser.add_argument('-Study', choices=predefined_studies.keys(), help='Specify a predefined study name', default=None)
+    parser.add_argument('-T', '--EncounterType', help='Specify Encounter Type',
+                        choices=['inpatient', 'outpatient', 'ambulatory', 'wellness', 'virtual', 'urgentcare',
+                                 'emergency'], default='inpatient')
     parser.add_argument('-V', '--Verbose', help='Include additional fields, not part of offical outputs', default=False)
-    parser.add_argument('-A', '--Age', help='Separate the output by year', default=False)
 
     # Add arguments that allow reports to be generated on a yearly basis.  To avoid excess files, add date restriction
     group1 = parser.add_argument_group()
@@ -33,7 +48,15 @@ def parse_arguments():
     group2.add_argument('-F', '--FormatOnly', help='Only Run Formatting code', action='store_true', default=False)
     group2.add_argument('-D', '--SyntheaGenOnly', help='Only Run Synthea Data Generation, not Formatting',
                         action='store_true', default=False)
+
     args = parser.parse_args()
+
+    # Apply overrides based on the chosen study
+    if args.Study in predefined_studies:
+        studyfolder = f'StudyOverrides/{args.Study}/'
+        for arg_name, arg_value in predefined_studies[args.Study].items():
+            setattr(args, arg_name, arg_value)
+
     if args.Yearly and args.YearRange is None:
         parser.error("--Yearly requires --YearRange")
 
@@ -41,8 +64,13 @@ def parse_arguments():
 
 
 def main():
-    start = time.time()
     args_dict = vars(parse_arguments())
+
+    print(args_dict)
+    # Custom validation for PersonCount
+    if not (1 <= args_dict['PersonCount'] <= 15000):
+        print("Error: PersonCount must be between 1 and 15000.")
+        return
 
     # Call this first to provide some command line feedback to the user about location choices
     city, state = parse_city(args_dict['City'])
@@ -57,8 +85,9 @@ def main():
     report_data(**args_dict)
 
     # Timekeeping stats
-    printSectionSubHeader('Total Elapsed Time')
-    printElapsedTime(start)
+    printSectionSubHeader('Timekeeping Stats')
+    timers.record_time('Total Elapsed Time', timers.start, suppress=True)
+    timers.print_timers()
 
 
 def generate_synthea_patients(city, state, **kwargs):
@@ -69,7 +98,7 @@ def generate_synthea_patients(city, state, **kwargs):
     file_path = os.path.realpath(__file__)
     directory = os.path.dirname(file_path)
     jar_file = os.path.join(directory, 'synthea-with-dependencies.jar')
-    synthea = Synthea(jar_file, 'synthea_settings')  # initialize the module
+    synthea = Synthea(jar_file, f'{studyfolder}synthea_settings')  # initialize the module
 
     # Subsequent Synthea runs append data to the CSVs (this is a setting) so we clear out the past output at the
     # start of each full run_synthea run - "formatted_data_DATETIME".csv is the only output persisting
@@ -84,10 +113,11 @@ def generate_synthea_patients(city, state, **kwargs):
     synth_start = time.time()
     synthea.specify_popsize(size=kwargs['PersonCount'])
     synthea.specify_gender(gender=kwargs['Gender'])
+    synthea.specify_module_overrides(module_overrides=kwargs['ModuleOverrides'], studyfolder=studyfolder)
     synthea.specify_age(minage=kwargs['Age'].split("-")[0], maxage=kwargs['Age'].split("-")[1])
     synthea.specify_city(state, city)
     synthea.run_synthea()
-    printElapsedTime(synth_start, "Patients created in: ")
+    timers.record_time('Patient Records', synth_start)
 
 
 def report_data(**kwargs):
@@ -96,11 +126,11 @@ def report_data(**kwargs):
     # Format data to our desired layout
     printSectionHeader('Formatting Data')
     form_start = time.time()
-    formatter = create_formatter(**kwargs)
+    formatter = create_formatter(timers, **kwargs)
     formatter.gather_data()
     data = formatter.format_data()
     formatter.write_data(data)
-    printElapsedTime(form_start, "Formatted output created in: ")
+    timers.record_time('Formatted Output', form_start)
 
 
 if __name__ == "__main__":
