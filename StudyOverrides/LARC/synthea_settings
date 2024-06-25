@@ -26,10 +26,10 @@ exporter.fhir.bulk_data = false
 exporter.fhir.included_resources =
 exporter.fhir.excluded_resources =
 exporter.groups.fhir.export = false
-exporter.hospital.fhir.export = true
+exporter.hospital.fhir.export = false
 exporter.hospital.fhir_stu3.export = false
 exporter.hospital.fhir_dstu2.export = false
-exporter.practitioner.fhir.export = true
+exporter.practitioner.fhir.export = false
 exporter.practitioner.fhir_stu3.export = false
 exporter.practitioner.fhir_dstu2.export = false
 exporter.encoding = UTF-8
@@ -208,7 +208,7 @@ generate.costs.default_device_cost = 0.00
 generate.costs.default_supply_cost = 0.00
 
 # Providers
-generate.providers.hospitals.default_file = providers/hospitals.csv
+generate.providers.hospitals.default_file = StudyOverrides/LARC/hospitals.csv
 generate.providers.longterm.default_file = providers/longterm.csv
 generate.providers.nursing.default_file = providers/nursing.csv
 generate.providers.rehab.default_file = providers/rehab.csv

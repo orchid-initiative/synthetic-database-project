@@ -88,6 +88,13 @@ class Synthea:
             else:
                 self.java_command = self.java_command + f'  -d  StudyOverrides'
 
+    def specify_keep_module(self, keep_module=False, studyfolder=''):
+        if keep_module:
+            if studyfolder != '':
+                self.java_command = self.java_command + f'  -k  {studyfolder}/keep_module.json'
+            else:
+                self.java_command = self.java_command + f'  -k  StudyOverrides/keep_module.json'
+
     # used if you want to focus on one area - one can also specify hospital list in overrides/hospitals file in the Jar
     def specify_city(self, state=None, city=None):
         if city:
@@ -98,9 +105,8 @@ class Synthea:
     def run_synthea(self):
         # Split by double space to allow for multi-word city names (that are separated by 1 space).  It's very likely
         # there is a more elegant way to do this though.
-        print(self.java_command)
+        print("Java Command: ", self.java_command)
         java_command_list = self.java_command.split('  ')
-        print(java_command_list)
         child = subprocess.Popen(java_command_list, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         output_str = child.stdout.read().decode()  # decode converts from bytes to string object
         timestamp = time.time()

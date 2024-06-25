@@ -136,6 +136,7 @@ class HCAIPDDFormat(HCAIBase):
                 lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%m%d%Y'))
             encounters['Discharge Date'] = encounters.iloc[:, 2].apply(
                 lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%m%d%Y'))
+
         # Pandas dayofweek is indexed starting 2 days before the desired index for HCAI format, so we add 2 and mod 7
         # Pandas dayofweek is indexed starting 2 days before the desired index for HCAI format, so we add 2 and mod 7
         encounters['Admission Day of the Week'] = encounters.iloc[:, 1].apply(
@@ -203,26 +204,28 @@ class HCAIPDDFormat(HCAIBase):
         print('Encounter info added.  Shape: ', self.output_df.shape)
         self.output_df = self.output_df.dropna(subset=['encounter_id']).reset_index(drop=True)
         print('Patients with no encounters of desired type dropped.  Shape: ', self.output_df.shape)
+        self.timers.record_time('Encounters Before Day Calcs', encount_start)
 
-        self.output_df['Age in Days at Admission'] = self.output_df.apply(
-            lambda x: calculate_age(x['Date of Birth'], x['Admission Date'], "agedays"), axis=1)
-        self.output_df['Age in Days at Discharge'] = self.output_df.apply(
-            lambda x: calculate_age(x['Date of Birth'], x['Discharge Date'], "agedays"), axis=1)
-        self.output_df['Age in Years at Admission'] = self.output_df.apply(
-            lambda x: calculate_age(x['Date of Birth'], x['Admission Date'], "years"), axis=1)
-        self.output_df['Age in Years at Discharge'] = self.output_df.apply(
-            lambda x: calculate_age(x['Date of Birth'], x['Discharge Date'], "years"), axis=1)
-        self.output_df['Age Range at Admission'] = self.output_df.apply(
-            lambda x: calculate_age(x['Date of Birth'], x['Admission Date'], "range5"), axis=1)
-        self.output_df['Age Range at Discharge'] = self.output_df.apply(
-            lambda x: calculate_age(x['Date of Birth'], x['Discharge Date'], "range5"), axis=1)
-        self.output_df['Age in Years at Discharge 10'] = self.output_df.apply(
-            lambda x: calculate_age(x['Date of Birth'], x['Discharge Date'], "range10"), axis=1)
-        self.output_df['Length Of Stay'] = self.output_df.apply(
-            lambda x: calculate_age(x['Admission Date'], x['Discharge Date'], "staydays"), axis=1)
-        self.output_df['Adjusted Length Of Stay'] = self.output_df.apply(
-            lambda x: calculate_age(x['Admission Date'], x['Discharge Date'], "adjstaydays"), axis=1)
+        self.output_df = calculate_age(self.output_df, date1='Date of Birth', date2='Admission Date',
+                                       form='agedays', fieldname='Age in Days at Admission')
+        self.output_df = calculate_age(self.output_df, date1='Date of Birth', date2='Discharge Date',
+                                       form='agedays', fieldname='Age in Days at Discharge')
+        self.output_df = calculate_age(self.output_df, date1='Date of Birth', date2='Admission Date',
+                                       form='years', fieldname='Age in Years at Admission')
+        self.output_df = calculate_age(self.output_df, date1='Date of Birth', date2='Discharge Date',
+                                       form='years', fieldname='Age in Years at Discharge')
+        self.output_df = calculate_age(self.output_df, date1='Date of Birth', date2='Admission Date',
+                                       form='range5', fieldname='Age Range at Admission')
+        self.output_df = calculate_age(self.output_df, date1='Date of Birth', date2='Discharge Date',
+                                       form='range5', fieldname='Age Range at Discharge')
+        self.output_df = calculate_age(self.output_df, date1='Date of Birth', date2='Discharge Date',
+                                       form='range10', fieldname='Age in Years at Discharge 10')
+        self.output_df = calculate_age(self.output_df, date1='Admission Date', date2='Discharge Date',
+                                       form='staydays', fieldname='Length Of Stay')
+        self.output_df = calculate_age(self.output_df, date1='Admission Date', date2='Discharge Date',
+                                       form='adjstaydays', fieldname='Adjusted Length Of Stay')
         print('Added age and duration statistics for admission and discharge.  Shape: ', self.output_df.shape)
+        self.timers.record_time('Encounters After Day Calcs', encount_start)
 
         del encounters
         self.timers.record_time('Encounters', encount_start)
