@@ -104,6 +104,7 @@ class HCAIBase(Formatter, ABC):
     def add_procedures(self):
         proc_start = time.time()
         procedures = self.synthea_output.procedures_df(subfields=[0, 3, 4])
+        self.timers.record_time('Procedures CSV Read', proc_start)
 
         # TODO procedures are not included in the current basic snomed map, find them.  Pass-through for now.
         #  Note that these are also longer and get truncated by field length later!
@@ -111,6 +112,7 @@ class HCAIBase(Formatter, ABC):
         # Reminder that column index 1 here is the column index 3 from the procedures.csv due to our subfields parameter
         procedures['encounter_id'] = procedures.iloc[:, 1]
 
+        # TODO - make this programmatically selected based on study args?
         # We do have some static LARC-related mappings, so try those, but for most results, its a passthrough of SNOMED
         procedures['Procedure Codes'] = mappings.larcsnomedmap(procedures.iloc[:, 2])
 
@@ -121,15 +123,25 @@ class HCAIBase(Formatter, ABC):
             procedures['Procedure Dates'] = procedures.iloc[:, 0].apply(
                 lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
 
+        print("ADMISSION DATE WITHING PROCEDURES BLOCK")
+        print(procedures['encounter_id'])
+        print(self.output_df['Admission Date'])
         # Grab Admission Date from output_df
         procedures = procedures.merge(self.output_df[['encounter_id', 'Admission Date']],
                                       how='left', on='encounter_id')
-        procedures['Procedure Days'] = procedures.apply(
-            lambda x: calculate_age(x['Admission Date'], x['Procedure Dates'], "staydays"), axis=1)
+        self.timers.record_time('Procedures Admission Date Merge', proc_start)
+
+        print(procedures['Admission Date'])
+
+        procedures = calculate_age(procedures, date1='Admission Date', date2='Procedure Dates',
+                                   form='staydays', fieldname='Procedure Days')
+
+        self.timers.record_time('Procedures Staydays Calculation', proc_start)
 
         # Group codes by encounter_id to consolidate to one row for each encounter - this makes later merges easier
         print('SUB-CHECK - Procedures Shape pre group: ', procedures.shape)
         procedures = procedures.groupby('encounter_id').agg(lambda x: tuple(x)).reset_index()
+        self.timers.record_time('Procedures Group By Calculation', proc_start)
 
         print('SUB-CHECK - Procedures Shape post group: ', procedures.shape)
 
@@ -140,15 +152,18 @@ class HCAIBase(Formatter, ABC):
                        ['Medicare Severity-Diagnosis Related Group', 'Major Diagnostic Category']] = ['768', '14']
         procedures.loc[procedures['Procedure Codes'].apply(lambda x: '11466000' in x),              # C-section
                        ['Medicare Severity-Diagnosis Related Group', 'Major Diagnostic Category']] = ['788', '14']
+        self.timers.record_time('Procedures Add MSDRGs', proc_start)
 
         # Merge procedure code and date into output_df and then do a special formatting operation for the lists
         self.output_df = self.output_df.merge(procedures[['encounter_id', 'Procedure Codes', 'Procedure Dates', 'Procedure Days', 'Medicare Severity-Diagnosis Related Group']],
                                               how='left', on='encounter_id')
         print('Procedures info added.  Shape: ', self.output_df.shape)
+        self.timers.record_time('Procedures Output DF merge', proc_start)
 
         self.output_df = self.output_df.apply(modify_procedure_row, axis=1, args=(
             ['Procedure Codes', 'Procedure Dates', 'Procedure Days'], ['Procedure Code', 'Procedure Date', 'Procedure Days']))
         print('Procedure info formatted.   Shape: ', self.output_df.shape)
+        self.timers.record_time('Procedures List Modifications', proc_start)
 
         del procedures
         self.timers.record_time('Procedures', proc_start)

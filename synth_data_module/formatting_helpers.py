@@ -4,10 +4,10 @@
 import glob
 import os
 import math
-import numpy
 from abc import ABC, abstractmethod
 from dateutil.relativedelta import relativedelta
 import pandas as pd
+import numpy as np
 
 
 class Formatter(ABC):
@@ -108,47 +108,45 @@ def modify_diagnosis_row(row, df_fields, new_fields):
     return row
 
 
+# Function to parse dates with multiple formats
+def parse_date(date):
+    try:
+        return pd.to_datetime(date, format='%m%d%Y').tz_localize(None)
+    except ValueError:
+        try:
+            return pd.to_datetime(date).tz_localize(None)
+        except ValueError:
+            return pd.NaT
+
+
+def parse_date_vectorized(series):
+    return pd.to_datetime(series, errors='coerce', format='%m%d%Y').fillna(pd.to_datetime(series, errors='coerce'))
+
+
 # HCAI has specific criteria for age reporting
-def calculate_age(x, y, form="agedays"):
-    try:
-        date1 = pd.to_datetime(x, format='%m%d%Y')
-    except ValueError:
-        try:
-            date1 = pd.to_datetime(x)
-        except ValueError:
-            return " "
-    try:
-        date2 = pd.to_datetime(y, format='%m%d%Y')
-    except ValueError:
-        try:
-            date2 = pd.to_datetime(y)
-        except ValueError:
-            return " "
+def calculate_age(df, date1, date2, form="agedays", fieldname='Procedure Days'):
+    # Ensure Date Formatting, then calculate specialized date differences according to desired format
+    df['date1'] = parse_date_vectorized(df[date1])
+    df['date2'] = parse_date_vectorized(df[date2])
+    df['basic_days'] = (df['date2'] - df['date1']).dt.days
 
-    agedays = date2-date1
-    try:
-        age = relativedelta(date2, date1)
-    except AssertionError:
-        pass
-
-    # Days are only reported as a field if the patient is under 1 years old, else reported as "0"
     if form == "agedays":
-        if agedays.days < 366:
-            return max(agedays.days, 1)
-        else:
-            return 0
-    elif form == "staydays" and numpy.isnan(agedays.days):
-        return agedays.days
+        df[fieldname] = np.where(df['basic_days'] < 366, df['basic_days'].clip(lower=1), 0)
     elif form == "staydays":
-        return int(agedays.days)
+        df[fieldname] = df['basic_days'].astype(float)  # Handle NaNs automatically
     elif form == 'adjstaydays':
-        return max(agedays.days, 1)
+        df[fieldname] = df['basic_days'].clip(lower=1)
     elif form == 'years':
-        return age.years
+        df[fieldname] = df.apply(lambda row: relativedelta(row['date2'], row['date1']).years, axis=1)
     elif form == 'range5':
-        return str(math.ceil((age.years+1)/5)+math.ceil(1*(age.years/(age.years+1)))).zfill(2)
+        df[fieldname] = df.apply(lambda row: str(math.ceil((relativedelta(row['date2'], row['date1']).years + 1) / 5) +
+                                                math.ceil(1 * (relativedelta(row['date2'], row['date1']).years /
+                                                               (relativedelta(row['date2'], row['date1']).years + 1)))).zfill(2), axis=1)
     elif form == 'range10':
-        return str(math.ceil((age.years+1)/10)+math.ceil(1*(age.years/(age.years+1)))).zfill(2)
+        df[fieldname] = df.apply(lambda row: str(math.ceil((relativedelta(row['date2'], row['date1']).years + 1) / 10) +
+                                                math.ceil(1 * (relativedelta(row['date2'], row['date1']).years /
+                                                               (relativedelta(row['date2'], row['date1']).years + 1)))).zfill(2), axis=1)
+    return df
 
 
 # Functions for maintaining data outputs and processing arguments for runtime

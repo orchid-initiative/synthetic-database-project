@@ -11,7 +11,7 @@ timers = CreateTimers()
 # Predefined Studies
 predefined_studies = {
     'LARC': {'Gender': 'F', 'Age': '15-50', 'FormatType': 'HCAI_PDD_CSV', 'City': 'Los Angeles,California',
-             'ModuleOverrides': True},
+             'ModuleOverrides': True, 'KeepModule': True},
     # Add more predefined studies as needed
 }
 studyfolder = ''
@@ -31,7 +31,8 @@ def parse_arguments():
     parser.add_argument('-N', '--PersonCount', help='Number of patients', type=int, metavar="[1-15000]", default=100)
     parser.add_argument('-O', '--FormatType', help='Specify the type of output',
                         choices=['HCAI_Inpatient_CSV', 'HCAI_Inpatient_FW', 'HCAI_PDD_CSV', 'HCAI_PDD_SAS', "all"],
-                        default="all")
+                        default="HCAI_PDD_CSV")
+    parser.add_argument('-K', '--KeepModule', help='Specify a keep module JSON', action='store_true', default=False)
     parser.add_argument('-Study', choices=predefined_studies.keys(), help='Specify a predefined study name', default=None)
     parser.add_argument('-T', '--EncounterType', help='Specify Encounter Type',
                         choices=['inpatient', 'outpatient', 'ambulatory', 'wellness', 'virtual', 'urgentcare',
@@ -114,7 +115,9 @@ def generate_synthea_patients(city, state, **kwargs):
     synthea.specify_popsize(size=kwargs['PersonCount'])
     synthea.specify_gender(gender=kwargs['Gender'])
     synthea.specify_module_overrides(module_overrides=kwargs['ModuleOverrides'], studyfolder=studyfolder)
-    synthea.specify_age(minage=kwargs['Age'].split("-")[0], maxage=kwargs['Age'].split("-")[1])
+    synthea.specify_keep_module(keep_module=kwargs['KeepModule'], studyfolder=studyfolder)
+    if kwargs['Age']:
+        synthea.specify_age(minage=kwargs['Age'].split("-")[0], maxage=kwargs['Age'].split("-")[1])
     synthea.specify_city(state, city)
     synthea.run_synthea()
     timers.record_time('Patient Records', synth_start)
