@@ -75,17 +75,17 @@ class HCAIBase(Formatter, ABC):
                 lambda x: dt.datetime.strptime(x, '%Y-%m-%d').strftime('%m%d%Y'))
             patients['Date of Birth Raw'] = patients.iloc[:, 1 ].apply(
                 lambda x: dt.datetime.strptime(x, '%Y-%m-%d').strftime('%m%d%Y'))
-        patients['Sex'] = patients.iloc[:, 14]
-        patients['Ethnicity'] = mappings.ethnicity(patients.iloc[:, 13])
-        patients['Race'] = mappings.race(patients.iloc[:, 12])
+        patients['Race'] = mappings.race(patients.iloc[:, 13])
+        patients['Ethnicity'] = mappings.ethnicity(patients.iloc[:, 14])
+        patients['Sex'] = patients.iloc[:, 15]
         patients['Social Security Number'] = patients.iloc[:, 3].fillna('000000001').apply(lambda x: x.replace('-', ''))
         patients['Record Linkage Number'] = patients.iloc[:, 3].fillna('000000001').apply(lambda x: x.replace('-', ''))
         patients['Abstract Record Number'] = patients.iloc[:, 3].fillna('000000001')
-        patients['Patient Address - Address Number and Street Name'] = patients.iloc[:, 16]
-        patients['Patient Address - City'] = patients.iloc[:, 17]
-        patients['Patient Address - State'] = patients.iloc[:, 18]
-        patients['Patient Address - County'] = mappings.CAcounty(patients.iloc[:, 19])
-        patients['Patient Address - Zip Code'] = patients.iloc[:, 21].fillna('XXXXX')
+        patients['Patient Address - Address Number and Street Name'] = patients.iloc[:, 17]
+        patients['Patient Address - City'] = patients.iloc[:, 18]
+        patients['Patient Address - State'] = patients.iloc[:, 19]
+        patients['Patient Address - County'] = mappings.CAcounty(patients.iloc[:, 20])
+        patients['Patient Address - Zip Code'] = patients.iloc[:, 22].fillna('XXXXX')
         patients['Patient Address - Country Code'] = self.country_code
         self.output_df = patients[['patient_id', 'Date of Birth', 'Date of Birth Raw', 'Sex', 'Ethnicity', 'Race',
                                    'Social Security Number', 'Record Linkage Number', 'Abstract Record Number',
@@ -123,15 +123,10 @@ class HCAIBase(Formatter, ABC):
             procedures['Procedure Dates'] = procedures.iloc[:, 0].apply(
                 lambda x: dt.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d'))
 
-        print("ADMISSION DATE WITHING PROCEDURES BLOCK")
-        print(procedures['encounter_id'])
-        print(self.output_df['Admission Date'])
         # Grab Admission Date from output_df
         procedures = procedures.merge(self.output_df[['encounter_id', 'Admission Date']],
                                       how='left', on='encounter_id')
         self.timers.record_time('Procedures Admission Date Merge', proc_start)
-
-        print(procedures['Admission Date'])
 
         procedures = calculate_age(procedures, date1='Admission Date', date2='Procedure Dates',
                                    form='staydays', fieldname='Procedure Days')

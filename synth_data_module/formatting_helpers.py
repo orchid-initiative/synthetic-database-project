@@ -120,7 +120,8 @@ def parse_date(date):
 
 
 def parse_date_vectorized(series):
-    return pd.to_datetime(series, errors='coerce', format='%m%d%Y').fillna(pd.to_datetime(series, errors='coerce'))
+    parsed_dates = pd.to_datetime(series, errors='coerce', format='%m%d%Y').fillna(pd.to_datetime(series, errors='coerce'))
+    return parsed_dates.dt.tz_localize(None)
 
 
 # HCAI has specific criteria for age reporting
@@ -136,16 +137,22 @@ def calculate_age(df, date1, date2, form="agedays", fieldname='Procedure Days'):
         df[fieldname] = df['basic_days'].astype(float)  # Handle NaNs automatically
     elif form == 'adjstaydays':
         df[fieldname] = df['basic_days'].clip(lower=1)
-    elif form == 'years':
-        df[fieldname] = df.apply(lambda row: relativedelta(row['date2'], row['date1']).years, axis=1)
-    elif form == 'range5':
-        df[fieldname] = df.apply(lambda row: str(math.ceil((relativedelta(row['date2'], row['date1']).years + 1) / 5) +
-                                                math.ceil(1 * (relativedelta(row['date2'], row['date1']).years /
-                                                               (relativedelta(row['date2'], row['date1']).years + 1)))).zfill(2), axis=1)
-    elif form == 'range10':
-        df[fieldname] = df.apply(lambda row: str(math.ceil((relativedelta(row['date2'], row['date1']).years + 1) / 10) +
-                                                math.ceil(1 * (relativedelta(row['date2'], row['date1']).years /
-                                                               (relativedelta(row['date2'], row['date1']).years + 1)))).zfill(2), axis=1)
+    elif form == "years":
+        df[fieldname] = df.apply(lambda row: relativedelta(row['date2'], row['date1']).years if pd.notna(row['date2']) and pd.notna(row['date1']) else pd.NA, axis=1)
+    elif form == "range5":
+        df[fieldname] = df.apply(lambda row: str((relativedelta(row['date2'], row['date1']).years + 1) // 5).zfill(2) if pd.notna(row['date2']) and pd.notna(row['date1']) else pd.NA, axis=1)
+    elif form == "range10":
+        df[fieldname] = df.apply(lambda row: str((relativedelta(row['date2'], row['date1']).years + 1) // 10).zfill(2) if pd.notna(row['date2']) and pd.notna(row['date1']) else pd.NA, axis=1)
+    # elif form == 'years':
+    #     df[fieldname] = df.apply(lambda row: relativedelta(row['date2'], row['date1']).years, axis=1)
+    # elif form == 'range5':
+    #     df[fieldname] = df.apply(lambda row: str(math.ceil((relativedelta(row['date2'], row['date1']).years + 1) / 5) +
+    #                                             math.ceil(1 * (relativedelta(row['date2'], row['date1']).years /
+    #                                                            (relativedelta(row['date2'], row['date1']).years + 1)))).zfill(2), axis=1)
+    # elif form == 'range10':
+    #     df[fieldname] = df.apply(lambda row: str(math.ceil((relativedelta(row['date2'], row['date1']).years + 1) / 10) +
+    #                                             math.ceil(1 * (relativedelta(row['date2'], row['date1']).years /
+    #                                                            (relativedelta(row['date2'], row['date1']).years + 1)))).zfill(2), axis=1)
     return df
 
 

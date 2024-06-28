@@ -1,0 +1,2 @@
+provider_num,npi,name,address,city,state,zip,fips_county,lat,lon,phone,provider_type_code,category,emergency,upin,pin,region_code,bed_count,clia_lab_number
+"50696","1013514199","KECK MEDICAL CENTER OF USC","1500 SAN PABLO ST","PASADENA",CA,"911052684",,34.1476452,-118.1444779,"3234428444","00-09",,,,,,,

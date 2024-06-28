@@ -11,7 +11,13 @@ timers = CreateTimers()
 # Predefined Studies
 predefined_studies = {
     'LARC': {'Gender': 'F', 'Age': '15-50', 'FormatType': 'HCAI_PDD_CSV', 'City': 'Los Angeles,California',
-             'ModuleOverrides': True, 'KeepModule': True},
+             'EncounterType': 'emergency', 'ModuleOverrides': True, 'KeepModule': True},
+
+#    'LARC': {'Gender': 'F', 'Age': '15-50', 'FormatType': 'HCAI_PDD_CSV', 'City': 'Los Angeles,California',
+#             'EncounterType': 'emergency', 'KeepModule': True},
+
+#    'LARC': {'Gender': 'F', 'Age': '15-50', 'FormatType': 'HCAI_PDD_CSV', 'City': 'Los Angeles,California',
+#             'EncounterType': 'emergency', 'ModuleOverrides': True},
     # Add more predefined studies as needed
 }
 studyfolder = ''
@@ -54,7 +60,7 @@ def parse_arguments():
 
     # Apply overrides based on the chosen study
     if args.Study in predefined_studies:
-        studyfolder = f'StudyOverrides/{args.Study}/'
+        studyfolder = f'StudyOverrides/{args.Study}'
         for arg_name, arg_value in predefined_studies[args.Study].items():
             setattr(args, arg_name, arg_value)
 
@@ -99,7 +105,7 @@ def generate_synthea_patients(city, state, **kwargs):
     file_path = os.path.realpath(__file__)
     directory = os.path.dirname(file_path)
     jar_file = os.path.join(directory, 'synthea-with-dependencies.jar')
-    synthea = Synthea(jar_file, f'{studyfolder}synthea_settings')  # initialize the module
+    synthea = Synthea(jar_file, f'{studyfolder}/synthea_settings')  # initialize the module
 
     # Subsequent Synthea runs append data to the CSVs (this is a setting) so we clear out the past output at the
     # start of each full run_synthea run - "formatted_data_DATETIME".csv is the only output persisting
@@ -114,8 +120,8 @@ def generate_synthea_patients(city, state, **kwargs):
     synth_start = time.time()
     synthea.specify_popsize(size=kwargs['PersonCount'])
     synthea.specify_gender(gender=kwargs['Gender'])
-    synthea.specify_module_overrides(module_overrides=kwargs['ModuleOverrides'], studyfolder=studyfolder)
     synthea.specify_keep_module(keep_module=kwargs['KeepModule'], studyfolder=studyfolder)
+    synthea.specify_module_overrides(module_overrides=kwargs['ModuleOverrides'], studyfolder=studyfolder)
     if kwargs['Age']:
         synthea.specify_age(minage=kwargs['Age'].split("-")[0], maxage=kwargs['Age'].split("-")[1])
     synthea.specify_city(state, city)
