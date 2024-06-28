@@ -5,7 +5,7 @@ exporter.use_uuid_filenames = false
 exporter.subfolders_by_id_substring = false
 # number of years of history to keep in exported records, anything older than this may be filtered out
 # set years_of_history = 0 to skip filtering altogether and keep the entire history
-exporter.years_of_history = 10
+exporter.years_of_history = 0
 # split records allows patients to have one record per provider organization
 exporter.split_records = false
 exporter.split_records.duplicate_data = false
@@ -37,7 +37,7 @@ exporter.json.export = false
 exporter.json.include_module_history = false
 exporter.csv.export = true
 # if exporter.csv.append_mode = true, then each run will add new data to any existing CSVs. if false, each run will clear out the files and start fresh and also include headers
-exporter.csv.append_mode = true
+exporter.csv.append_mode = false
 # if exporter.csv.folder_per_run = true, then each run will have CSVs placed into a unique subfolder. if false, each run will only use the top-level csv folder
 exporter.csv.folder_per_run = false
 # included_files and excluded_files list out the files to include/exclude in the csv exporter
@@ -131,7 +131,7 @@ generate.only_alive_patients = false
 # this is the maximum number of times synthea will loop over a single slot attempting to produce a matching patient.
 # after this many failed attempts, it will throw an exception.
 # set this to 0 to allow for unlimited attempts (but be aware of the possibility that it will never complete!)
-generate.max_attempts_to_keep_patient = 1000
+generate.max_attempts_to_keep_patient = 100
 
 # if true, tracks and prints out details of transition tables for each module upon completion
 # note that this may significantly slow down processing, and is intended primarily for debugging
