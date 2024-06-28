@@ -15,6 +15,7 @@
 !.gitignore
 !requirements.txt
 !documentation/*.md
+!StudyOverrides/*
 
 # 5. also, allow specific datasets we want to publish
 !data/sample_data.csv
