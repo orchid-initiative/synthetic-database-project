@@ -84,14 +84,14 @@ class Synthea:
     def specify_module_overrides(self, module_overrides=False, studyfolder=''):
         if module_overrides:
             if studyfolder != '':
-                self.java_command = self.java_command + f'  -d  {studyfolder}/OverrideModules'
+                self.java_command = self.java_command + f'  -d  {studyfolder}OverrideModules'
             else:
                 self.java_command = self.java_command + f'  -d  StudyOverrides/Default/OverrideModules'
 
     def specify_keep_module(self, keep_module=False, studyfolder=''):
         if keep_module:
             if studyfolder != '':
-                self.java_command = self.java_command + f'  -k  {studyfolder}/KeepModule/keep_module.json'
+                self.java_command = self.java_command + f'  -k  {studyfolder}KeepModule/keep_module.json'
             else:
                 self.java_command = self.java_command + f'  -k  StudyOverrides/Default/KeepModule/keep_module.json'
 

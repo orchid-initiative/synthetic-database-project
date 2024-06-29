@@ -10,7 +10,7 @@ timers = CreateTimers()
 
 # Predefined Studies
 predefined_studies = {
-    'LARC': {'Gender': 'F', 'Age': '15-50', 'FormatType': 'HCAI_PDD_CSV', 'City': 'Los Angeles,California',
+    'LARC': {'Gender': 'F', 'Age': '15-50', 'FormatType': 'HCAI_PDD_CSV', 'City': 'California',
              'EncounterType': 'emergency', 'ModuleOverrides': True, 'KeepModule': True},
 
 #    'LARC': {'Gender': 'F', 'Age': '15-50', 'FormatType': 'HCAI_PDD_CSV', 'City': 'Los Angeles,California',
@@ -60,7 +60,7 @@ def parse_arguments():
 
     # Apply overrides based on the chosen study
     if args.Study in predefined_studies:
-        studyfolder = f'StudyOverrides/{args.Study}'
+        studyfolder = f'StudyOverrides/{args.Study}/'
         for arg_name, arg_value in predefined_studies[args.Study].items():
             setattr(args, arg_name, arg_value)
 
@@ -75,8 +75,8 @@ def main():
 
     print(args_dict)
     # Custom validation for PersonCount
-    if not (1 <= args_dict['PersonCount'] <= 15000):
-        print("Error: PersonCount must be between 1 and 15000.")
+    if not (1 <= args_dict['PersonCount'] <= 25000):
+        print("Error: PersonCount must be between 1 and 25000.")
         return
 
     # Call this first to provide some command line feedback to the user about location choices
@@ -105,7 +105,7 @@ def generate_synthea_patients(city, state, **kwargs):
     file_path = os.path.realpath(__file__)
     directory = os.path.dirname(file_path)
     jar_file = os.path.join(directory, 'synthea-with-dependencies.jar')
-    synthea = Synthea(jar_file, f'{studyfolder}/synthea_settings')  # initialize the module
+    synthea = Synthea(jar_file, f'{studyfolder}synthea_settings')  # initialize the module
 
     # Subsequent Synthea runs append data to the CSVs (this is a setting) so we clear out the past output at the
     # start of each full run_synthea run - "formatted_data_DATETIME".csv is the only output persisting

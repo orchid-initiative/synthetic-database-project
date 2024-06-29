@@ -174,7 +174,7 @@ class HCAIPDDFormat(HCAIBase):
         payers = self.synthea_output.payers_df()
         payers['payer_id'] = payers.iloc[:, 0]
         payers['Plan Code Number'] = mappings.hmo_plan_codes(payers.iloc[:, 1])
-        payers['Payer Category'] = payers.apply(mappings.payer_category, axis=1).astype(str)
+        payers['Payer Category'] = payers.apply(mappings.payer_category, axis=1, study='LARC').astype(str)
         encounters = encounters.merge(payers[['payer_id', 'Plan Code Number', 'Payer Category']], how='left', left_on='payer_id',
                                       right_on='payer_id')
         print('SUB-CHECK - Payers and codes merged.  Encounters Shape: ', encounters.shape)

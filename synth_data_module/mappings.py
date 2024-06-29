@@ -87,7 +87,7 @@ def hmo_plan_codes(col):
     return col
 
 
-def payer_category(df):
+def payer_category(df, study=None):
     govdic = {'medicare': '01',
               'medi-cal': '02',
               'medical': '02',
@@ -100,8 +100,12 @@ def payer_category(df):
            # Other Indigent : '07',
            }
     # If Gov owned payer identify if medicare or medical, otherwise return 06 ('OTHER Gov'). lower match for accuracy
+    # Add a path to get medical in for gov if doing a specific study
     if df[2] in ['GOVERNMENT', ]:
-        category = govdic.get(df[1].lower(), '06')
+        if study == 'LARC':
+            category = govdic.get(df[1].lower(), '02')
+        else:
+            category = govdic.get(df[1].lower(), '06')
     # If Private owned, look up specific designations (to be added as necessary) otherwise return 03 = private coverage
     elif df[2] in ['PRIVATE', ]:
         category = privdic.get(df[1], '03')

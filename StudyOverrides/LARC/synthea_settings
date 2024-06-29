@@ -227,7 +227,7 @@ generate.providers.ihs.primarycare.default_file = providers/ihs_centers.csv
 #  random  - select randomly.
 #  network - select a random provider in your insurance network. same as random except it changes every time the patient switches insurance provider.
 #  medicare - select the nearest provider that can bill Medicare. If no Medicare provider is found, it defaults back to "nearest".
-generate.providers.selection_behavior = nearest
+generate.providers.selection_behavior = random
 
 # if a provider cannot be found for a certain type of service,
 # this will default to the nearest hospital.
