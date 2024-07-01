@@ -75,8 +75,8 @@ def main():
 
     print(args_dict)
     # Custom validation for PersonCount
-    if not (1 <= args_dict['PersonCount'] <= 25000):
-        print("Error: PersonCount must be between 1 and 25000.")
+    if not (1 <= args_dict['PersonCount'] <= 50000):
+        print("Error: PersonCount must be between 1 and 50000.")
         return
 
     # Call this first to provide some command line feedback to the user about location choices
