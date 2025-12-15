@@ -16,6 +16,8 @@
 !requirements.txt
 !documentation/*.md
 !StudyOverrides/*
+!synthea/**
+!synthetic-database-project/**
 
 # 5. also, allow specific datasets we want to publish
 !data/sample_data.csv
